@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ค้นหา - Pakjai</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/search.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/pakjai/index.html">🌲 Pakjai</a>
+            </div>
+            <div class="nav-menu">
+                <a href="/pakjai/dashboard.html" class="nav-link">Feed</a>
+                <a href="/pakjai/search.html" class="nav-link active">ค้นหา</a>
+                <a href="/pakjai/messages.html" class="nav-link">ข้อความ</a>
+                <a href="/pakjai/profile.html" class="nav-link">โปรไฟล์</a>
+                <button id="logoutBtn" class="nav-link logout-btn">ออกจากระบบ</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-container">
+        <!-- Search Box -->
+        <div class="search-box-wrapper">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="🔍 ค้นหาผู้ใช้ หรือ #แฮชแท็ก..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn" class="search-btn">ค้นหา</button>
+            </div>
+
+            <!-- Search Filters -->
+            <div class="search-filters">
+                <button class="filter-tab active" data-filter="all">ทั้งหมด</button>
+                <button class="filter-tab" data-filter="users">👥 ผู้ใช้</button>
+                <button class="filter-tab" data-filter="posts">📸 โพสต์</button>
+                <button class="filter-tab" data-filter="tags">🏷️ แฮชแท็ก</button>
+            </div>
+        </div>
+
+        <!-- Recent Searches & Trending -->
+        <div id="recentSearchesContainer" class="search-section active">
+            <div class="section-wrapper">
+                <div class="recent-searches">
+                    <h3>🔍 ค้นหาล่าสุด</h3>
+                    <div id="recentSearchesList" class="searches-list">
+                        <!-- Recent searches will load here -->
+                    </div>
+                </div>
+
+                <div class="trending-section">
+                    <h3>🔥 กำลังนิยม</h3>
+                    <div id="trendingList" class="trending-list">
+                        <!-- Trending will load here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div id="resultsContainer" class="search-section">
+            <!-- Users Results -->
+            <div id="usersResults" class="results-section">
+                <h3>👥 ผู้ใช้ที่พบ</h3>
+                <div id="usersList" class="users-list">
+                    <!-- Users will load here -->
+                </div>
+            </div>
+
+            <!-- Posts Results -->
+            <div id="postsResults" class="results-section">
+                <h3>📸 โพสต์ที่พบ</h3>
+                <div id="postsList" class="posts-results-list">
+                    <!-- Posts will load here -->
+                </div>
+            </div>
+
+            <!-- Tags Results -->
+            <div id="tagsResults" class="results-section">
+                <h3>🏷️ แฮชแท็ก</h3>
+                <div id="tagsList" class="tags-list">
+                    <!-- Tags will load here -->
+                </div>
+            </div>
+
+            <!-- No Results Message -->
+            <div id="noResults" class="no-results-message" style="display: none;">
+                <p>ไม่พบผลลัพธ์ 😅</p>
+                <p class="text-small">ลองค้นหาด้วยคำอื่น ๆ</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Preview Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content user-modal-content">
+            <button class="modal-close">&times;</button>
+            <div id="userModalBody">
+                <!-- User info will load here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/storage.js"></script>
+    <script src="/js/search.js"></script>
+</body>
+</html>

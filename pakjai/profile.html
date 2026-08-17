@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรไฟล์ - Pakjai</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/profile.css">
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/pakjai/index.html">🌲 Pakjai</a>
+            </div>
+            <div class="nav-menu">
+                <a href="/pakjai/dashboard.html" class="nav-link">Feed</a>
+                <a href="/pakjai/search.html" class="nav-link">ค้นหา</a>
+                <a href="/pakjai/messages.html" class="nav-link">ข้อความ</a>
+                <a href="/pakjai/profile.html" class="nav-link active">โปรไฟล์</a>
+                <button id="logoutBtn" class="nav-link logout-btn">ออกจากระบบ</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-bg"></div>
+
+            <div class="profile-info-box">
+                <img id="profileImage" class="profile-avatar" src="" alt="Profile">
+
+                <div class="profile-details">
+                    <div class="profile-top">
+                        <div>
+                            <h1 id="profileUsername">Loading...</h1>
+                            <p id="profileHandle" class="profile-handle">@username</p>
+                        </div>
+                        <button id="editProfileBtn" class="btn-primary">แก้ไขโปรไฟล์</button>
+                    </div>
+
+                    <p id="profileBio" class="profile-bio">ยังไม่มีประวัติส่วนตัว</p>
+
+                    <div class="profile-stats">
+                        <div class="stat-box">
+                            <span class="stat-num" id="postsCount">0</span>
+                            <span class="stat-label">โพสต์</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-num" id="followersCount">0</span>
+                            <span class="stat-label">เพื่อน</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-num" id="followingCount">0</span>
+                            <span class="stat-label">กำลังติดตาม</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="profile-tabs">
+            <button class="tab-btn active" data-tab="posts">📸 โพสต์</button>
+            <button class="tab-btn" data-tab="media">🖼️ ภาพ</button>
+            <button class="tab-btn" data-tab="followers">👥 ผู้ติดตาม</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="profile-content">
+            <!-- Posts Tab -->
+            <div id="postsTab" class="tab-content active">
+                <div id="postsContainer" class="posts-grid">
+                    <!-- Posts will load here -->
+                </div>
+                <div id="noPostsMsg" class="no-posts-message" style="display: none;">
+                    <p>ยังไม่มีโพสต์ 📭</p>
+                </div>
+            </div>
+
+            <!-- Media Tab -->
+            <div id="mediaTab" class="tab-content">
+                <div id="mediaContainer" class="media-grid">
+                    <!-- Media will load here -->
+                </div>
+            </div>
+
+            <!-- Followers Tab -->
+            <div id="followersTab" class="tab-content">
+                <div id="followersList" class="followers-list">
+                    <!-- Followers will load here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h2>แก้ไขโปรไฟล์</h2>
+
+            <form id="editForm" class="edit-form">
+                <div class="form-group">
+                    <label>รูปโปรไฟล์</label>
+                    <div class="profile-photo-upload">
+                        <img id="previewProfileImg" class="preview-img" src="" alt="Preview">
+                        <div class="file-input-wrapper">
+                            <input type="file" id="profilePhotoInput" accept="image/*">
+                            <label for="profilePhotoInput" class="btn-icon">📷 เปลี่ยนรูป</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>รูปหน้าปก</label>
+                    <div class="cover-photo-upload">
+                        <div id="previewCoverImg" class="preview-cover" aria-label="ตัวอย่างรูปหน้าปก"></div>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="coverPhotoInput" accept="image/*">
+                            <label for="coverPhotoInput" class="btn-icon">🖼️ เปลี่ยนรูปหน้าปก</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ชื่อผู้ใช้</label>
+                    <input type="text" id="editUsername" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="editEmail">
+                </div>
+
+                <div class="form-group">
+                    <label>ประวัติส่วนตัว (Bio)</label>
+                    <textarea id="editBio" placeholder="เขียนเกี่ยวกับตัวคุณ..." maxlength="150"></textarea>
+                    <small id="bioCount">0/150</small>
+                </div>
+
+                <button type="submit" class="btn-primary">บันทึกการเปลี่ยนแปลง</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- View User Modal (for viewing other profiles) -->
+    <div id="userModal" class="modal">
+        <div class="modal-content user-modal-content">
+            <button class="modal-close">&times;</button>
+            <div id="userModalBody">
+                <!-- User info will load here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/storage.js"></script>
+    <script src="/js/profile.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed - Pakjai</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="./index.html">🌲 Pakjai</a>
+            </div>
+            <div class="nav-menu">
+                <a href="/pakjai/dashboard.html" class="nav-link active">Feed</a>
+                <a href="/pakjai/search.html" class="nav-link">ค้นหา</a>
+                <a href="/pakjai/messages.html" class="nav-link">ข้อความ</a>
+                <a href="/pakjai/profile.html" class="nav-link">โปรไฟล์</a>
+                <button id="logoutBtn" class="nav-link logout-btn">ออกจากระบบ</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="user-card">
+                <img id="sidebarProfileImg" class="sidebar-profile-img" src="" alt="Profile">
+                <h3 id="sidebarUsername">Loading...</h3>
+                <p id="sidebarBio" class="sidebar-bio">ยังไม่มีประวัติส่วนตัว</p>
+                <div class="sidebar-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="followersCount">0</span>
+                        <span class="stat-label">เพื่อน</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="followingCount">0</span>
+                        <span class="stat-label">กำลังติดตาม</span>
+                    </div>
+                </div>
+                <a href="/pakjai/profile.html" class="btn-secondary">แก้ไขโปรไฟล์</a>
+            </div>
+
+            <div class="trending">
+                <h4>🔥 กำลังนิยม</h4>
+                <div id="trendingList" class="trending-list">
+                    <!-- Trending tags will be here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Feed -->
+        <main class="feed-main">
+            <!-- Create Post Section -->
+            <div class="create-post-card">
+                <div class="create-post-header">
+                    <img id="createPostImg" class="create-post-profile-img" src="" alt="Profile">
+                    <input
+                        type="text"
+                        id="postCaption"
+                        class="create-post-input"
+                        placeholder="บ่ายนี้คุณสนใจจะแบ่งปันอะไรไหมครับ?"
+                    >
+                </div>
+                <div class="create-post-actions">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="postImage" accept="image/*">
+                        <label for="postImage" class="btn-icon">📷 รูป</label>
+                    </div>
+                    <button id="createPostBtn" class="btn-primary">โพสต์</button>
+                </div>
+                <div id="imagePreview" class="image-preview"></div>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+                <button class="filter-btn" data-filter="following">กำลังติดตาม</button>
+                <button class="filter-btn" data-filter="liked">ที่ชอบ</button>
+                <button class="filter-btn" data-filter="saved">🔖 บันทึกไว้</button>
+            </div>
+
+            <!-- Posts Feed -->
+            <div id="feedContainer" class="feed-container">
+                <!-- Posts will load here -->
+            </div>
+
+            <!-- Loading indicator -->
+            <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                <p>กำลังโหลด...</p>
+            </div>
+
+            <!-- No posts message -->
+            <div id="noPostsMessage" class="no-posts-message" style="display: none;">
+                <p>ยังไม่มีโพสต์ 📭</p>
+                <p class="text-small">เป็นคนแรกที่สร้างโพสต์!</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Comment Modal -->
+    <div id="commentModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <div id="modalPostDetail" class="post-detail"></div>
+            <div class="comment-section">
+                <textarea id="commentInput" placeholder="เขียนความเห็น..."></textarea>
+                <button id="submitCommentBtn" class="btn-primary">ส่งความเห็น</button>
+            </div>
+            <div id="commentsList" class="comments-list"></div>
+        </div>
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="../js/dashboard.js"></script>
+</body>
+</html>
