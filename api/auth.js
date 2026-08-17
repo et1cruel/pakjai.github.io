@@ -128,6 +128,10 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Unknown action' });
   } catch (error) {
     console.error('Supabase Auth API error:', error);
-    return res.status(500).json({ success: false, error: 'ไม่สามารถเชื่อมต่อ Supabase ได้' });
+    const isConfigurationError = error.message?.includes('required');
+    return res.status(isConfigurationError ? 500 : 500).json({
+      success: false,
+      error: process.env.NODE_ENV === 'production' ? 'ไม่สามารถดำเนินการสมัครสมาชิกได้ กรุณาตรวจสอบการตั้งค่า Supabase' : error.message
+    });
   }
 };

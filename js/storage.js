@@ -22,8 +22,10 @@ const Storage = {
 
     async getServerSession() {
         const response = await fetch('/api/auth', { credentials: 'include', headers: { Accept: 'application/json' } });
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) return null;
         const result = await response.json();
-        if (!response.ok || !result.success) return null;
+        if (!response.ok || !result.success || !result.user) return null;
         this.setCurrentUser(result.user);
         return result.user;
     },
