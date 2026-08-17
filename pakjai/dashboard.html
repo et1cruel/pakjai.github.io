@@ -6,6 +6,7 @@
     <title>Feed - Pakjai</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/profile-preview.css">
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -28,8 +29,8 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="user-card">
-                <img id="sidebarProfileImg" class="sidebar-profile-img" src="" alt="Profile">
-                <h3 id="sidebarUsername">Loading...</h3>
+                <img id="sidebarProfileImg" class="sidebar-profile-img" src="" alt="Profile" data-profile-username="">
+                <h3 id="sidebarUsername" data-profile-username="">Loading...</h3>
                 <p id="sidebarBio" class="sidebar-bio">ยังไม่มีประวัติส่วนตัว</p>
                 <div class="sidebar-stats">
                     <div class="stat">
@@ -136,5 +137,6 @@
 
     <script src="../js/storage.js"></script>
     <script src="../js/dashboard.js"></script>
+    <script src="../js/profile-preview.js"></script>
 </body>
 </html>

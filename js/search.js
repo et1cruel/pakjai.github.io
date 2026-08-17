@@ -173,8 +173,8 @@ function displayUserResults(users) {
             JSON.parse(localStorage.getItem('users')).find(u => u.id === currentUser.id)?.following.includes(user.id);
 
         card.innerHTML = `
-            <img class="user-result-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar">
-            <div class="user-result-name">${user.nickname || user.username}</div>
+            <img class="user-result-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar" data-profile-username="${user.username}">
+            <div class="user-result-name" data-profile-username="${user.username}">${user.nickname || user.username}</div>
             <div class="user-result-handle">@${user.username}</div>
             <div class="user-result-bio">${user.bio || 'ไม่มีประวัติส่วนตัว'}</div>
 
@@ -222,7 +222,7 @@ function displayPostResults(posts) {
             <div class="post-result-header">
                 <img class="post-result-avatar" src="${postUser?.profileImage || generateAvatar(post.username)}" alt="Avatar">
                 <div class="post-result-user-info">
-                    <div class="post-result-username">${postUser?.nickname || post.username}</div>
+                    <div class="post-result-username" data-profile-username="${post.username}">${postUser?.nickname || post.username}</div>
                     <div class="post-result-time">${formatTime(post.timestamp)}</div>
                 </div>
             </div>

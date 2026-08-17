@@ -1,0 +1,56 @@
+.profile-hover-card {
+    position: fixed;
+    z-index: 10000;
+    display: flex;
+    gap: 12px;
+    width: 280px;
+    padding: 14px;
+    color: #23443a;
+    background: #fff;
+    border: 1px solid rgba(52, 168, 135, .25);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(26, 72, 58, .2);
+    cursor: pointer;
+}
+
+.profile-hover-card[hidden] {
+    display: none;
+}
+
+.profile-hover-card>img {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-hover-card-body {
+    min-width: 0;
+}
+
+.profile-hover-card-body strong,
+.profile-hover-card-body span,
+.profile-hover-card-body p {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-hover-card-body strong {
+    font-size: 1rem;
+}
+
+.profile-hover-card-body span,
+.profile-hover-card-body small {
+    color: #6b827a;
+}
+
+.profile-hover-card-body p {
+    margin: 6px 0;
+    font-size: .88rem;
+}
+
+[data-profile-username] {
+    cursor: pointer;
+}

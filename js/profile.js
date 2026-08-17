@@ -20,8 +20,11 @@ function checkAuth() {
 
 // Load current user's profile
 function loadProfile() {
-    profileUser = Storage.getUser(currentUser.username);
+    const requestedUsername = new URLSearchParams(window.location.search).get('username');
+    profileUser = Storage.getUser(requestedUsername || currentUser.username);
+    viewingOtherProfile = Boolean(requestedUsername && requestedUsername !== currentUser.username);
     if (profileUser) {
+        document.getElementById('editProfileBtn').style.display = viewingOtherProfile ? 'none' : '';
         displayProfileInfo();
         loadUserPosts();
         loadTabs();
@@ -133,9 +136,10 @@ function createFollowerCard(user) {
 
     const div = document.createElement('div');
     div.className = 'follower-card';
+    div.dataset.profileUsername = user.username;
     div.innerHTML = `
-        <img class="follower-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar">
-        <div class="follower-name">${user.nickname || user.username}</div>
+            <img class="follower-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar" data-profile-username="${user.username}">
+        <div class="follower-name" data-profile-username="${user.username}">${user.nickname || user.username}</div>
         <div class="follower-handle">@${user.username}</div>
         <div class="follower-bio">${user.bio || 'ไม่มีประวัติส่วนตัว'}</div>
         <button class="follower-btn ${isFollowing ? 'following' : ''}" onclick="toggleFollow('${user.id}')">

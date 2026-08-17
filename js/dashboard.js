@@ -27,6 +27,7 @@ function loadUserInfo() {
     const user = Storage.getUser(currentUser.username);
     if (user) {
         const sidebarUsername = document.getElementById('sidebarUsername');
+        sidebarUsername.dataset.profileUsername = user.username;
         sidebarUsername.textContent = user.nickname || user.username;
         sidebarUsername.style.color = user.nicknameColor || '#34a887';
         sidebarUsername.classList.add('nickname-display');
@@ -38,10 +39,12 @@ function loadUserInfo() {
             const sidebarImg = document.getElementById('sidebarProfileImg');
             const createPostImg = document.getElementById('createPostImg');
             sidebarImg.src = user.profileImage;
+            sidebarImg.dataset.profileUsername = user.username;
             createPostImg.src = user.profileImage;
         } else {
             const avatar = generateAvatar(user.username);
             document.getElementById('sidebarProfileImg').src = avatar;
+            document.getElementById('sidebarProfileImg').dataset.profileUsername = user.username;
             document.getElementById('createPostImg').src = avatar;
         }
     }
@@ -335,9 +338,9 @@ function createPostElement(post) {
     div.className = 'post-card';
     div.innerHTML = `
         <div class="post-header">
-            <img class="post-avatar" src="${postUser?.profileImage || generateAvatar(post.username)}" alt="Avatar">
+            <img class="post-avatar" src="${postUser?.profileImage || generateAvatar(post.username)}" alt="Avatar" data-profile-username="${escapeHtml(post.username)}">
             <div class="post-user-info">
-                <div class="post-username" style="color: ${postUser?.nicknameColor || '#34a887'}" class="nickname-display">${escapeHtml(postDisplayName)}</div>
+                <div class="post-username nickname-display" data-profile-username="${escapeHtml(post.username)}" style="color: ${postUser?.nicknameColor || '#34a887'}">${escapeHtml(postDisplayName)}</div>
                 <div class="post-timestamp">${formatTime(post.timestamp)}</div>
             </div>
             ${String(post.userId) === String(currentUser.id) ? `
