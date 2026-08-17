@@ -66,9 +66,11 @@ function showMessage(text, type) {
 }
 
 // Check if already logged in
-window.addEventListener('load', () => {
-    const currentUser = Storage.getCurrentUser();
-    if (currentUser) {
-        window.location.assign('/pakjai/dashboard.html');
+window.addEventListener('load', async () => {
+    try {
+        const currentUser = await Storage.getServerSession();
+        if (currentUser) window.location.assign('/pakjai/dashboard.html');
+    } catch (error) {
+        console.warn('Session check failed:', error);
     }
 });

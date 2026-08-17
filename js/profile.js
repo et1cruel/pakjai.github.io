@@ -3,15 +3,16 @@ let profileUser = null;
 let viewingOtherProfile = false;
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
+    if (!currentUser) return;
     loadProfile();
     setupEventListeners();
 });
 
 // Check authentication
-function checkAuth() {
-    currentUser = Storage.getCurrentUser();
+async function checkAuth() {
+    currentUser = await Storage.getServerSession().catch(() => Storage.getCurrentUser());
     if (!currentUser) {
         window.location.href = '/pakjai/index.html';
         return;

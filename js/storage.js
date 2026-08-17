@@ -17,7 +17,15 @@ const Storage = {
     },
 
     getCurrentUser() {
-        return JSON.parse(localStorage.getItem('currentUser'));
+        try { return JSON.parse(localStorage.getItem('currentUser')); } catch { return null; }
+    },
+
+    async getServerSession() {
+        const response = await fetch('/api/auth', { credentials: 'include', headers: { Accept: 'application/json' } });
+        const result = await response.json();
+        if (!response.ok || !result.success) return null;
+        this.setCurrentUser(result.user);
+        return result.user;
     },
 
     setCurrentUser(user) {
@@ -25,8 +33,10 @@ const Storage = {
         this.saveUser(user);
     },
 
-    logout() {
-        localStorage.removeItem('currentUser');
+    async logout() {
+        try { await fetch('/api/auth', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }); } finally {
+            localStorage.removeItem('currentUser');
+        }
     },
 
     userExists(username, email) {

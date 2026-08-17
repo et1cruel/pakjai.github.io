@@ -4,15 +4,16 @@ let conversations = [];
 let allMessages = [];
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
+    if (!currentUser) return;
     loadConversations();
     setupEventListeners();
 });
 
 // Check authentication
-function checkAuth() {
-    currentUser = Storage.getCurrentUser();
+async function checkAuth() {
+    currentUser = await Storage.getServerSession().catch(() => Storage.getCurrentUser());
     if (!currentUser) {
         window.location.href = '/pakjai/index.html';
         return;
@@ -85,7 +86,7 @@ function loadConversations() {
         conversationMap[key].lastMessage = msg;
     });
 
-    conversations = Object.values(conversationMap).sort((a, b) => 
+    conversations = Object.values(conversationMap).sort((a, b) =>
         new Date(b.lastMessage.timestamp) - new Date(a.lastMessage.timestamp)
     );
 
@@ -105,8 +106,8 @@ function displayConversations() {
     document.getElementById('emptyConversations').style.display = 'none';
 
     conversations.forEach(conv => {
-        const otherUserId = conv.participants.senderId === currentUser.id 
-            ? conv.participants.receiverId 
+        const otherUserId = conv.participants.senderId === currentUser.id
+            ? conv.participants.receiverId
             : conv.participants.senderId;
 
         const otherUser = JSON.parse(localStorage.getItem('users') || '[]')
@@ -116,7 +117,7 @@ function displayConversations() {
             const item = document.createElement('div');
             item.className = `conversation-item ${currentChatUserId === otherUserId ? 'active' : ''}`;
 
-            const preview = conv.lastMessage.text.substring(0, 30) + 
+            const preview = conv.lastMessage.text.substring(0, 30) +
                 (conv.lastMessage.text.length > 30 ? '...' : '');
 
             item.innerHTML = `
@@ -164,7 +165,7 @@ function loadMessages(userId) {
     const messagesArea = document.getElementById('messagesArea');
     messagesArea.innerHTML = '';
 
-    const chatMessages = allMessages.filter(msg => 
+    const chatMessages = allMessages.filter(msg =>
         (msg.senderId === currentUser.id && msg.receiverId === userId) ||
         (msg.senderId === userId && msg.receiverId === currentUser.id)
     );
@@ -305,7 +306,7 @@ function formatTime(isoString) {
     if (diff < 60) return 'เมื่อสักครู่';
     if (diff < 3600) return Math.floor(diff / 60) + ' นาทีที่แล้ว';
     if (diff < 86400) return Math.floor(diff / 3600) + ' ชั่วโมงที่แล้ว';
-    
+
     return date.toLocaleDateString('th-TH');
 }
 
@@ -320,7 +321,7 @@ function generateAvatar(username) {
     const color = colors[username.charCodeAt(0) % colors.length];
     const svg = `<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
         <rect width="50" height="50" fill="${color}"/>
-        <text x="25" y="25" font-size="24" font-weight="bold" fill="white" 
+        <text x="25" y="25" font-size="24" font-weight="bold" fill="white"
               text-anchor="middle" dominant-baseline="central">${username[0].toUpperCase()}</text>
     </svg>`;
     return 'data:image/svg+xml;base64,' + btoa(svg);

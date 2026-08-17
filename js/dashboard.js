@@ -6,16 +6,17 @@ let cameraStream = null;
 let cameraFacingMode = 'user';
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
+    if (!currentUser) return;
     loadUserInfo();
     loadPosts();
     setupEventListeners();
 });
 
 // Check authentication
-function checkAuth() {
-    currentUser = Storage.getCurrentUser();
+async function checkAuth() {
+    currentUser = await Storage.getServerSession().catch(() => Storage.getCurrentUser());
     if (!currentUser) {
         window.location.href = '/pakjai/index.html';
         return;

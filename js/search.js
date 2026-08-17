@@ -4,16 +4,17 @@ let currentSearchTerm = '';
 let currentFilter = 'all';
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
+    if (!currentUser) return;
     loadRecentSearches();
     setupEventListeners();
     loadTrendingData();
 });
 
 // Check authentication
-function checkAuth() {
-    currentUser = Storage.getCurrentUser();
+async function checkAuth() {
+    currentUser = await Storage.getServerSession().catch(() => Storage.getCurrentUser());
     if (!currentUser) {
         window.location.href = '/pakjai/index.html';
         return;
