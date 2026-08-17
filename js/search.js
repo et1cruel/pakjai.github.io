@@ -35,7 +35,7 @@ function setupEventListeners() {
             document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentFilter = btn.dataset.filter;
-            
+
             if (currentSearchTerm) {
                 displayResults();
             }
@@ -63,7 +63,7 @@ function setupEventListeners() {
 // Perform search
 function performSearch() {
     const searchTerm = document.getElementById('searchInput').value.trim();
-    
+
     if (!searchTerm) {
         return;
     }
@@ -100,7 +100,7 @@ function displayResults() {
         document.getElementById('tagsResults').style.display = 'none';
     } else {
         document.getElementById('noResults').style.display = 'none';
-        
+
         if (results.users.length > 0) {
             document.getElementById('usersResults').style.display = 'block';
         } else {
@@ -131,7 +131,7 @@ function searchItems(term) {
     // Search users
     const allUsers = JSON.parse(localStorage.getItem('users')) || [];
     allUsers.forEach(user => {
-        if (user.username.toLowerCase().includes(lowerTerm) || 
+        if (user.username.toLowerCase().includes(lowerTerm) ||
             user.bio?.toLowerCase().includes(lowerTerm) ||
             user.email.toLowerCase().includes(lowerTerm)) {
             users.push(user);
@@ -153,7 +153,7 @@ function searchItems(term) {
     });
 
     // Add hashtag results
-    const tagsArray = Array.from(tags).filter(tag => 
+    const tagsArray = Array.from(tags).filter(tag =>
         tag.toLowerCase().includes(lowerTerm)
     );
 
@@ -168,16 +168,16 @@ function displayUserResults(users) {
     users.slice(0, 9).forEach(user => {
         const card = document.createElement('div');
         card.className = 'user-result-card';
-        
-        const isFollowing = currentUser.id && 
+
+        const isFollowing = currentUser.id &&
             JSON.parse(localStorage.getItem('users')).find(u => u.id === currentUser.id)?.following.includes(user.id);
 
         card.innerHTML = `
             <img class="user-result-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar">
-            <div class="user-result-name">${user.username}</div>
+            <div class="user-result-name">${user.nickname || user.username}</div>
             <div class="user-result-handle">@${user.username}</div>
             <div class="user-result-bio">${user.bio || 'ไม่มีประวัติส่วนตัว'}</div>
-            
+
             <div class="user-result-stats">
                 <div class="user-stat">
                     <div class="user-stat-num">${user.posts?.length || 0}</div>
@@ -192,7 +192,7 @@ function displayUserResults(users) {
                     <div class="user-stat-label">ติดตาม</div>
                 </div>
             </div>
-            
+
             <button class="user-result-btn ${isFollowing ? 'following' : ''}" onclick="toggleFollowUser('${user.id}')">
                 ${isFollowing ? '✓ กำลังติดตาม' : '+ ติดตาม'}
             </button>
@@ -222,7 +222,7 @@ function displayPostResults(posts) {
             <div class="post-result-header">
                 <img class="post-result-avatar" src="${postUser?.profileImage || generateAvatar(post.username)}" alt="Avatar">
                 <div class="post-result-user-info">
-                    <div class="post-result-username">${post.username}</div>
+                    <div class="post-result-username">${postUser?.nickname || post.username}</div>
                     <div class="post-result-time">${formatTime(post.timestamp)}</div>
                 </div>
             </div>
@@ -249,7 +249,7 @@ function displayTagResults(tags) {
 
     tags.slice(0, 12).forEach(tag => {
         const posts = JSON.parse(localStorage.getItem('posts')) || [];
-        const tagPostCount = posts.filter(p => 
+        const tagPostCount = posts.filter(p =>
             p.caption.toLowerCase().includes(tag.toLowerCase())
         ).length;
 
@@ -279,7 +279,7 @@ function showUserModal(user) {
 
     body.innerHTML = `
         <img class="user-modal-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar">
-        <div class="user-modal-name">${user.username}</div>
+        <div class="user-modal-name">${user.nickname || user.username}</div>
         <div class="user-modal-handle">@${user.username}</div>
         <div class="user-modal-bio">${user.bio || 'ไม่มีประวัติส่วนตัว'}</div>
 
@@ -332,7 +332,7 @@ function toggleFollowUser(userId) {
 function addToRecentSearches(term) {
     recentSearches = recentSearches.filter(s => s !== term);
     recentSearches.unshift(term);
-    
+
     if (recentSearches.length > 10) {
         recentSearches.pop();
     }
@@ -429,7 +429,7 @@ function formatTime(isoString) {
     if (diff < 3600) return Math.floor(diff / 60) + ' นาทีที่แล้ว';
     if (diff < 86400) return Math.floor(diff / 3600) + ' ชั่วโมงที่แล้ว';
     if (diff < 604800) return Math.floor(diff / 86400) + ' วันที่แล้ว';
-    
+
     return date.toLocaleDateString('th-TH');
 }
 
@@ -444,7 +444,7 @@ function generateAvatar(username) {
     const color = colors[username.charCodeAt(0) % colors.length];
     const svg = `<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
         <rect width="80" height="80" fill="${color}"/>
-        <text x="40" y="40" font-size="36" font-weight="bold" fill="white" 
+        <text x="40" y="40" font-size="36" font-weight="bold" fill="white"
               text-anchor="middle" dominant-baseline="central">${username[0].toUpperCase()}</text>
     </svg>`;
     return 'data:image/svg+xml;base64,' + btoa(svg);

@@ -2,6 +2,8 @@ let currentUser = null;
 let allPosts = [];
 let currentFilter = 'all';
 let currentCommentingPostId = null;
+let cameraStream = null;
+let cameraFacingMode = 'user';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,7 +26,10 @@ function checkAuth() {
 function loadUserInfo() {
     const user = Storage.getUser(currentUser.username);
     if (user) {
-        document.getElementById('sidebarUsername').textContent = user.username;
+        const sidebarUsername = document.getElementById('sidebarUsername');
+        sidebarUsername.textContent = user.nickname || user.username;
+        sidebarUsername.style.color = user.nicknameColor || '#34a887';
+        sidebarUsername.classList.add('nickname-display');
         document.getElementById('sidebarBio').textContent = user.bio || 'ยังไม่มีประวัติส่วนตัว';
         document.getElementById('followersCount').textContent = user.followers.length;
         document.getElementById('followingCount').textContent = user.following.length;
@@ -59,6 +64,13 @@ function setupEventListeners() {
     // Create post
     document.getElementById('createPostBtn').addEventListener('click', createPost);
     document.getElementById('postImage').addEventListener('change', previewImage);
+    document.getElementById('openCameraBtn').addEventListener('click', openCamera);
+    document.getElementById('closeCameraBtn').addEventListener('click', closeCamera);
+    document.getElementById('capturePhotoBtn').addEventListener('click', capturePhoto);
+    document.getElementById('switchCameraBtn').addEventListener('click', switchCamera);
+    document.getElementById('cameraModal').addEventListener('click', (e) => {
+        if (e.target.id === 'cameraModal') closeCamera();
+    });
 
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -101,10 +113,78 @@ function previewImage(e) {
                 preview.innerHTML = '';
                 document.getElementById('postImage').value = '';
             });
-            document.getElementById('postImageData').src = event.target.result;
+            const imageData = document.getElementById('postImageData');
+            if (imageData) imageData.src = event.target.result;
         };
         reader.readAsDataURL(file);
     }
+}
+
+// Open the device camera (front camera by default)
+async function openCamera() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+        alert('เบราว์เซอร์นี้ไม่รองรับการเปิดกล้องโดยตรง กรุณาใช้ HTTPS หรือ localhost');
+        return;
+    }
+
+    document.getElementById('cameraModal').classList.add('active');
+    await startCamera();
+}
+
+async function startCamera() {
+    stopCameraStream();
+    const message = document.getElementById('cameraMessage');
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: cameraFacingMode },
+            audio: false
+        });
+        const video = document.getElementById('cameraVideo');
+        video.srcObject = cameraStream;
+        message.textContent = cameraFacingMode === 'user' ? 'กล้องหน้า พร้อมถ่ายรูปแล้ว' : 'กล้องหลัง พร้อมถ่ายรูปแล้ว';
+    } catch (error) {
+        message.textContent = 'ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้งานกล้อง';
+        console.error('Camera error:', error);
+    }
+}
+
+function stopCameraStream() {
+    if (!cameraStream) return;
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+}
+
+function closeCamera() {
+    stopCameraStream();
+    document.getElementById('cameraVideo').srcObject = null;
+    document.getElementById('cameraModal').classList.remove('active');
+}
+
+async function switchCamera() {
+    cameraFacingMode = cameraFacingMode === 'user' ? 'environment' : 'user';
+    await startCamera();
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    if (!cameraStream || !video.videoWidth) {
+        alert('กล้องยังไม่พร้อม กรุณารอสักครู่');
+        return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => {
+        const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const postImage = document.getElementById('postImage');
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        postImage.files = dataTransfer.files;
+        previewImage({ target: postImage });
+        closeCamera();
+    }, 'image/jpeg', 0.9);
 }
 
 // Create new post
@@ -152,7 +232,8 @@ function createPost() {
         document.getElementById('imagePreview').innerHTML = '';
 
         loadPosts();
-        alert('โพสต์สำเร็จ! ✓');
+        showPostSuccessMessage();
+        showHeartBurst();
     };
 
     if (imageInput.files[0]) {
@@ -160,6 +241,38 @@ function createPost() {
     } else {
         reader.onload({ target: { result: '' } });
     }
+}
+
+// Show a burst of small hearts when a post is published
+function showHeartBurst() {
+    const burst = document.createElement('div');
+    burst.className = 'heart-burst';
+
+    for (let i = 0; i < 14; i += 1) {
+        const heart = document.createElement('span');
+        heart.className = 'floating-heart';
+        heart.textContent = '♥';
+        heart.style.setProperty('--heart-x', `${Math.round(Math.random() * 260 - 130)}px`);
+        heart.style.setProperty('--heart-y', `${Math.round(Math.random() * -220 - 80)}px`);
+        heart.style.setProperty('--heart-rotate', `${Math.round(Math.random() * 80 - 40)}deg`);
+        heart.style.setProperty('--heart-delay', `${(Math.random() * 0.25).toFixed(2)}s`);
+        heart.style.fontSize = `${Math.round(Math.random() * 10 + 16)}px`;
+        burst.appendChild(heart);
+    }
+
+    document.body.appendChild(burst);
+    window.setTimeout(() => burst.remove(), 1900);
+}
+
+// Show a friendly confirmation after a post is published
+function showPostSuccessMessage() {
+    const message = document.getElementById('postSuccessMessage');
+    if (!message) return;
+
+    message.classList.remove('show');
+    void message.offsetWidth;
+    message.classList.add('show');
+    window.setTimeout(() => message.classList.remove('show'), 4000);
 }
 
 // Load posts
@@ -208,10 +321,15 @@ function displayPosts() {
 // Create post element
 function createPostElement(post) {
     const postUser = Storage.getUser(post.username);
-    const isLiked = post.likes.includes(currentUser.id);
-    const isThanked = post.thanks.includes(currentUser.id);
-    const isHugged = post.hugs.includes(currentUser.id);
+    const postDisplayName = postUser?.nickname || post.username;
+    const currentReaction = getCurrentReaction(post);
+    const isLiked = currentReaction === 'like';
+    const isThanked = currentReaction === 'thanks';
+    const isHugged = currentReaction === 'hugs';
     const isSaved = post.savedBy.includes(currentUser.id);
+    const reactionTitle = currentReaction
+        ? 'เปลี่ยนความรู้สึกของคุณได้ โดยยังนับเป็น 1 ครั้ง'
+        : 'เลือกความรู้สึกได้ 1 อย่างต่อโพสต์';
 
     const div = document.createElement('div');
     div.className = 'post-card';
@@ -219,7 +337,7 @@ function createPostElement(post) {
         <div class="post-header">
             <img class="post-avatar" src="${postUser?.profileImage || generateAvatar(post.username)}" alt="Avatar">
             <div class="post-user-info">
-                <div class="post-username">${post.username}</div>
+                <div class="post-username" style="color: ${postUser?.nicknameColor || '#34a887'}" class="nickname-display">${escapeHtml(postDisplayName)}</div>
                 <div class="post-timestamp">${formatTime(post.timestamp)}</div>
             </div>
             ${String(post.userId) === String(currentUser.id) ? `
@@ -236,16 +354,16 @@ function createPostElement(post) {
             <div class="post-caption">${escapeHtml(post.caption)}</div>
 
             <div class="post-actions">
-                <button class="post-action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+                <button class="post-action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')" title="${reactionTitle}">
                     ${isLiked ? '❤️' : '🤍'} <span>${post.likes.length}</span>
                 </button>
                 <button class="post-action-btn" onclick="openCommentModal('${post.id}')">
                     💬 <span>${post.comments.length}</span>
                 </button>
-                <button class="post-action-btn thank-btn ${isThanked ? 'thanked' : ''}" onclick="toggleThanks('${post.id}')">
+                <button class="post-action-btn thank-btn ${isThanked ? 'thanked' : ''}" onclick="toggleThanks('${post.id}')" title="${reactionTitle}">
                     🙏 ขอบคุณ <span>${post.thanks.length}</span>
                 </button>
-                <button class="post-action-btn hug-btn ${isHugged ? 'hugged' : ''}" onclick="toggleHugs('${post.id}')">
+                <button class="post-action-btn hug-btn ${isHugged ? 'hugged' : ''}" onclick="toggleHugs('${post.id}')" title="${reactionTitle}">
                     🤗 กอด <span>${post.hugs.length}</span>
                 </button>
                 <button class="post-action-btn share-btn" onclick="sharePost('${post.id}')">
@@ -352,21 +470,32 @@ function toggleSavePost(postId) {
     displayPosts();
 }
 
-// Toggle the thank-you reaction
-function toggleThanks(postId) {
+// Return the one reaction selected by the current user for this post
+function getCurrentReaction(post) {
+    if (post.likes.includes(currentUser.id)) return 'like';
+    if (post.thanks.includes(currentUser.id)) return 'thanks';
+    if (post.hugs.includes(currentUser.id)) return 'hugs';
+    return null;
+}
+
+// Change reaction without increasing the user's reaction count for this post
+function setReaction(postId, reactionType) {
     const post = allPosts.find(p => String(p.id) === String(postId));
     if (!post) return;
-    if (!Array.isArray(post.thanks)) post.thanks = [];
 
-    const thankIndex = post.thanks.indexOf(currentUser.id);
-    if (thankIndex > -1) {
-        post.thanks.splice(thankIndex, 1);
-    } else {
-        post.thanks.push(currentUser.id);
-    }
+    ['likes', 'thanks', 'hugs'].forEach(type => {
+        if (!Array.isArray(post[type])) post[type] = [];
+        post[type] = post[type].filter(userId => String(userId) !== String(currentUser.id));
+    });
 
+    post[reactionType].push(currentUser.id);
     localStorage.setItem('posts', JSON.stringify(allPosts));
     displayPosts();
+}
+
+// Select or change the thank-you reaction
+function toggleThanks(postId) {
+    setReaction(postId, 'thanks');
 }
 
 // Submit a comment directly from the post card
@@ -391,21 +520,9 @@ function submitInlineComment(postId) {
     displayPosts();
 }
 
-// Toggle the hug reaction
+// Select or change the hug reaction
 function toggleHugs(postId) {
-    const post = allPosts.find(p => String(p.id) === String(postId));
-    if (!post) return;
-    if (!Array.isArray(post.hugs)) post.hugs = [];
-
-    const hugIndex = post.hugs.indexOf(currentUser.id);
-    if (hugIndex > -1) {
-        post.hugs.splice(hugIndex, 1);
-    } else {
-        post.hugs.push(currentUser.id);
-    }
-
-    localStorage.setItem('posts', JSON.stringify(allPosts));
-    displayPosts();
+    setReaction(postId, 'hugs');
 }
 
 // Edit a post owned by the current user
@@ -448,20 +565,9 @@ function syncUserPosts() {
     localStorage.setItem('users', JSON.stringify(users));
 }
 
-// Toggle like
+// Select or change the heart reaction
 function toggleLike(postId) {
-    const post = allPosts.find(p => p.id === postId);
-    if (!post) return;
-
-    const likeIndex = post.likes.indexOf(currentUser.id);
-    if (likeIndex > -1) {
-        post.likes.splice(likeIndex, 1);
-    } else {
-        post.likes.push(currentUser.id);
-    }
-
-    localStorage.setItem('posts', JSON.stringify(allPosts));
-    displayPosts();
+    setReaction(postId, 'likes');
 }
 
 // Comment modal
@@ -471,12 +577,13 @@ function openCommentModal(postId) {
     if (!post) return;
 
     const postUser = Storage.getUser(post.username);
+    const postDisplayName = postUser?.nickname || post.username;
     const detail = document.getElementById('modalPostDetail');
     detail.innerHTML = `
         <div class="post-header">
             <img class="post-avatar" src="${postUser?.profileImage || generateAvatar(post.username)}" alt="Avatar">
             <div class="post-user-info">
-                <div class="post-username">${post.username}</div>
+                <div class="post-username" style="color: ${postUser?.nicknameColor || '#34a887'}" class="nickname-display">${escapeHtml(postDisplayName)}</div>
                 <div class="post-timestamp">${formatTime(post.timestamp)}</div>
             </div>
         </div>

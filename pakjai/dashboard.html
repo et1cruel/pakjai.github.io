@@ -62,17 +62,23 @@
                         type="text"
                         id="postCaption"
                         class="create-post-input"
-                        placeholder="บ่ายนี้คุณสนใจจะแบ่งปันอะไรไหมครับ?"
+                        placeholder="ตอนนี้คุณสนใจจะแบ่งปันอะไรไหมครับ?"
                     >
                 </div>
                 <div class="create-post-actions">
                     <div class="file-input-wrapper">
                         <input type="file" id="postImage" accept="image/*">
-                        <label for="postImage" class="btn-icon">📷 รูป</label>
+                        <label for="postImage" class="btn-icon">🖼️ รูป</label>
                     </div>
+                    <button type="button" id="openCameraBtn" class="btn-icon camera-btn">📸ถ่ายรูป</button>
                     <button id="createPostBtn" class="btn-primary">โพสต์</button>
                 </div>
                 <div id="imagePreview" class="image-preview"></div>
+            </div>
+
+            <div id="postSuccessMessage" class="post-success-message" role="status" aria-live="polite">
+                <span class="post-success-icon">🌷</span>
+                <span>ขอบคุณที่ส่งต่อความคิดน้า</span>
             </div>
 
             <!-- Filter Buttons -->
@@ -99,6 +105,20 @@
                 <p class="text-small">เป็นคนแรกที่สร้างโพสต์!</p>
             </div>
         </main>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="modal camera-modal">
+        <div class="modal-content camera-modal-content">
+            <button type="button" id="closeCameraBtn" class="modal-close">&times;</button>
+            <h3>📸 ถ่ายรูปสำหรับโพสต์</h3>
+            <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
+            <p id="cameraMessage" class="camera-message">กำลังเตรียมกล้อง...</p>
+            <div class="camera-actions">
+                <button type="button" id="switchCameraBtn" class="btn-secondary camera-action-btn">🔄 สลับกล้อง</button>
+                <button type="button" id="capturePhotoBtn" class="btn-primary camera-action-btn">ถ่ายรูป</button>
+            </div>
+        </div>
     </div>
 
     <!-- Comment Modal -->

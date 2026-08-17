@@ -57,6 +57,17 @@
     margin-bottom: 5px;
 }
 
+.nickname-display {
+    paint-order: stroke fill;
+    -webkit-text-stroke: 1.5px #111;
+    text-shadow:
+        1px 1px 0 #111,
+        -1px -1px 0 #111,
+        1px -1px 0 #111,
+        -1px 1px 0 #111,
+        0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
 .profile-handle {
     color: #999;
     font-size: 1.1rem;
@@ -175,6 +186,18 @@
 
 .grid-post:hover img {
     transform: scale(1.1);
+}
+
+.grid-post-author {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    z-index: 2;
+    padding: 4px 8px;
+    color: white;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 10px;
+    font-size: 0.85rem;
 }
 
 .grid-post-overlay {
@@ -299,6 +322,80 @@
     border-radius: 15px;
 }
 
+/* Nickname */
+.nickname-status {
+    display: block;
+    margin-top: 5px;
+    color: #34a887;
+    font-size: 0.85rem;
+}
+
+.nickname-status.nickname-locked {
+    color: #d8891f;
+}
+
+.nickname-color-picker {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 4px 10px;
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, #fff8fb 0%, #fffdf3 48%, #f3fbff 100%);
+    border: 1px solid #f2d8e4;
+    border-radius: 17px;
+    box-shadow: 0 5px 14px rgba(204, 135, 170, 0.12);
+}
+
+.nickname-color-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #8c5b76;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.nickname-color-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(194, 117, 157, 0.18);
+    font-size: 1rem;
+}
+
+.nickname-color-hint {
+    color: #b18c9f;
+    font-size: 0.78rem;
+}
+
+.nickname-color-input {
+    width: 42px;
+    height: 42px;
+    padding: 3px;
+    border: 3px solid white;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: 0 0 0 2px #f0bfd5, 0 4px 10px rgba(194, 117, 157, 0.28);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nickname-color-input:hover {
+    transform: scale(1.1) rotate(8deg);
+    box-shadow: 0 4px 12px rgba(194, 117, 157, 0.35);
+}
+
+.nickname-color-input:focus-visible {
+    outline: 3px solid #f3b5d0;
+    outline-offset: 2px;
+}
+
 /* Edit Form */
 .edit-form {
     margin-top: 20px;
@@ -373,6 +470,24 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .nickname-color-picker {
+        grid-template-columns: 1fr auto;
+    }
+
+    .nickname-color-label {
+        grid-column: 1;
+    }
+
+    .nickname-color-hint {
+        grid-column: 1;
+        margin-left: 34px;
+    }
+
+    .nickname-color-input {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+    }
+
     .profile-top {
         flex-direction: column;
         gap: 15px;

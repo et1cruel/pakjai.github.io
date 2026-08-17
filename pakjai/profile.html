@@ -133,6 +133,21 @@
                     <input type="text" id="editUsername" disabled>
                 </div>
 
+                <div class="form-group nickname-group">
+                    <label for="editNickname">ชื่อเล่น</label>
+                    <input type="text" id="editNickname" maxlength="30" placeholder="ตั้งชื่อเล่นของคุณ">
+                    <small id="nicknameStatus" class="nickname-status"></small>
+                    <div class="nickname-color-picker">
+                        <label for="nicknameColor" class="nickname-color-label">
+                            <span class="nickname-color-icon">🎨</span>
+                            <span>สีชื่อเล่น</span>
+                        </label>
+                        <span class="nickname-color-hint">เลือกสีที่เป็นตัวคุณ</span>
+                        <input type="color" id="nicknameColor" class="nickname-color-input" value="#34a887"
+                            title="เลือกสีชื่อเล่น">
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Email</label>
                     <input type="email" id="editEmail">
