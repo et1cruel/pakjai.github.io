@@ -2,14 +2,18 @@
 const Storage = {
     // Users data
     saveUser(user) {
-        let users = JSON.parse(localStorage.getItem('users')) || [];
-        users.push(user);
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const index = users.findIndex(existing => existing.id === user.id || existing.username === user.username);
+        if (index >= 0) users[index] = { ...users[index], ...user };
+        else users.push(user);
         localStorage.setItem('users', JSON.stringify(users));
     },
 
     getUser(username) {
-        let users = JSON.parse(localStorage.getItem('users')) || [];
-        return users.find(u => u.username === username || u.email === username);
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const currentUser = this.getCurrentUser();
+        return users.find(u => u.username === username || u.email === username)
+            || (currentUser && (currentUser.username === username || currentUser.email === username) ? currentUser : null);
     },
 
     getCurrentUser() {
@@ -18,6 +22,7 @@ const Storage = {
 
     setCurrentUser(user) {
         localStorage.setItem('currentUser', JSON.stringify(user));
+        this.saveUser(user);
     },
 
     logout() {
