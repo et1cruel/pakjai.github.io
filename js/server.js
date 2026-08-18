@@ -2,12 +2,16 @@ const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('../config/db.js');
+const authHandler = require('../api/auth.js');
 const User = require('./Users.js');
 
-console.log('Looking for .env at:', path.join(__dirname, '../.env'));
-dotenv.config({ path: path.join(__dirname, '../.env') });
+const envPath = path.join(__dirname, '../config/.env');
+console.log('Looking for .env at:', envPath);
+dotenv.config({ path: envPath });
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '..')));
+app.use('/api/auth', authHandler);
 
 // API ตัวอย่าง: สมัครสมาชิก (Signup)
 app.post('/api/signup', async (req, res) => {

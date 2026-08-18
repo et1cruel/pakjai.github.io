@@ -1,3 +1,5 @@
+const API_BASE_URL = window.PAKJAI_API_BASE_URL || (window.location.port === '5500' ? 'http://localhost:3000' : '');
+
 // LocalStorage helper functions
 const Storage = {
     // Users data
@@ -21,7 +23,7 @@ const Storage = {
     },
 
     async getServerSession() {
-        const response = await fetch('/api/auth', { credentials: 'include', headers: { Accept: 'application/json' } });
+        const response = await fetch(`${API_BASE_URL}/api/auth`, { credentials: 'include', headers: { Accept: 'application/json' } });
         const contentType = response.headers.get('content-type') || '';
         if (!contentType.includes('application/json')) return null;
         const result = await response.json();
@@ -36,7 +38,7 @@ const Storage = {
     },
 
     async logout() {
-        try { await fetch('/api/auth', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }); } finally {
+        try { await fetch(`${API_BASE_URL}/api/auth`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }); } finally {
             localStorage.removeItem('currentUser');
         }
     },

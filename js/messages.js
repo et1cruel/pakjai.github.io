@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function checkAuth() {
     currentUser = await Storage.getServerSession().catch(() => Storage.getCurrentUser());
     if (!currentUser) {
-        window.location.href = '/pakjai/index.html';
+        window.location.href = '/index.html';
         return;
     }
 }
@@ -61,7 +61,7 @@ function setupEventListeners() {
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', () => {
         Storage.logout();
-        window.location.href = '/pakjai/index.html';
+        window.location.href = '/index.html';
     });
 }
 

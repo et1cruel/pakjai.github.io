@@ -4,6 +4,7 @@
   },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/pakjai/:path*", "destination": "/pakjai/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

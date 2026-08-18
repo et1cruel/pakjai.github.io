@@ -1,3 +1,5 @@
+window.PAKJAI_API_BASE_URL = window.location.port === '5500' ? 'http://localhost:3000' : '';
+
 // Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -41,7 +43,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
 
 async function submitAuth(payload, successMessage) {
     try {
-        const response = await fetch('/api/auth', {
+        const response = await fetch(`${window.PAKJAI_API_BASE_URL}/api/auth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(payload)
