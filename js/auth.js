@@ -56,7 +56,7 @@ async function submitAuth(payload, successMessage) {
         window.setTimeout(() => { window.location.assign('/pakjai/dashboard.html'); }, 500);
     } catch (error) {
         console.error('Authentication request failed:', error);
-        showMessage('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง', 'error');
+        showMessage(`เกิดข้อผิดพลาด: ${error.message}`, 'error');
     }
 }
 

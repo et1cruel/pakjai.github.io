@@ -5,6 +5,7 @@ const connectDB = require('../config/db.js');
 const User = require('./Users.js');
 
 console.log('Looking for .env at:', path.join(__dirname, '../.env'));
+dotenv.config({ path: path.join(__dirname, '../.env') });
 const app = express();
 app.use(express.json());
 
@@ -12,7 +13,7 @@ app.use(express.json());
 app.post('/api/signup', async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        
+
         // บันทึกลง MongoDB
         const newUser = await User.create({ username, email, password });
         res.status(201).json({ success: true, data: newUser });
@@ -22,5 +23,13 @@ app.post('/api/signup', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+async function startServer() {
+    await connectDB();
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+startServer().catch(error => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+});

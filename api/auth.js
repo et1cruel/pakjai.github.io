@@ -1,15 +1,34 @@
-const { createClient } = require('@supabase/supabase-js');
+const mongoose = require('mongoose');
 const crypto = require('crypto');
 
 const SESSION_DAYS = 30;
+let connectionPromise;
 
-function getSupabase() {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
-  }
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  passwordHash: { type: String, required: true },
+  bio: { type: String, default: '' },
+  profileImage: { type: String, default: '' },
+  followers: { type: [String], default: [] },
+  following: { type: [String], default: [] },
+  posts: { type: [mongoose.Schema.Types.Mixed], default: [] }
+}, { timestamps: true });
+
+const sessionSchema = new mongoose.Schema({
+  tokenHash: { type: String, required: true, unique: true, index: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'PakjaiUser' },
+  expiresAt: { type: Date, required: true, index: true }
+}, { timestamps: true });
+sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+const User = mongoose.models.PakjaiUser || mongoose.model('PakjaiUser', userSchema);
+const Session = mongoose.models.PakjaiSession || mongoose.model('PakjaiSession', sessionSchema);
+
+function connectDatabase() {
+  if (!process.env.MONGO_URI) throw new Error('MONGO_URI is not configured in Vercel');
+  connectionPromise ??= mongoose.connect(process.env.MONGO_URI, { bufferCommands: false });
+  return connectionPromise;
 }
 
 function hashPassword(password) {
@@ -29,7 +48,7 @@ function verifyPassword(password, stored) {
 function publicUser(user) {
   return {
     id: user.id, username: user.username, email: user.email,
-    bio: user.bio || '', profileImage: user.profile_image || '',
+    bio: user.bio || '', profileImage: user.profileImage || '',
     followers: user.followers || [], following: user.following || [], posts: user.posts || []
   };
 }
@@ -43,10 +62,17 @@ function hashToken(token) {
 }
 
 function readCookies(req) {
-  return Object.fromEntries((req.headers.cookie || '').split(';').filter(Boolean).map(value => {
+  const cookies = {};
+  for (const value of (req.headers.cookie || '').split(';').filter(Boolean)) {
     const index = value.indexOf('=');
-    return [value.slice(0, index).trim(), decodeURIComponent(value.slice(index + 1).trim())];
-  }));
+    if (index < 0) continue;
+    try {
+      cookies[value.slice(0, index).trim()] = decodeURIComponent(value.slice(index + 1).trim());
+    } catch {
+      // Ignore malformed cookie values and continue parsing valid cookies.
+    }
+  }
+  return cookies;
 }
 
 function setSessionCookie(res, token) {
@@ -58,31 +84,26 @@ function clearSessionCookie(res) {
   res.setHeader('Set-Cookie', 'pakjai_session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax');
 }
 
-async function createSession(supabase, user, res) {
+async function createSession(user, res) {
   const token = createSessionToken();
-  const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000).toISOString();
-  const { error } = await supabase.from('sessions').insert({ token_hash: hashToken(token), user_id: user.id, expires_at: expiresAt });
-  if (error) throw error;
+  await Session.create({ tokenHash: hashToken(token), userId: user._id, expiresAt: new Date(Date.now() + SESSION_DAYS * 86400000) });
   setSessionCookie(res, token);
 }
 
-async function getSessionUser(supabase, req) {
+async function getSessionUser(req) {
   const token = readCookies(req).pakjai_session;
   if (!token) return null;
-  const { data: session, error } = await supabase.from('sessions').select('user_id, expires_at').eq('token_hash', hashToken(token)).gt('expires_at', new Date().toISOString()).maybeSingle();
-  if (error) throw error;
+  const session = await Session.findOne({ tokenHash: hashToken(token), expiresAt: { $gt: new Date() } });
   if (!session) return null;
-  const { data: user, error: userError } = await supabase.from('users').select('*').eq('id', session.user_id).single();
-  if (userError) throw userError;
-  return user;
+  return User.findById(session.userId);
 }
 
 module.exports = async function handler(req, res) {
   try {
-    const supabase = getSupabase();
+    await connectDatabase();
 
     if (req.method === 'GET') {
-      const user = await getSessionUser(supabase, req);
+      const user = await getSessionUser(req);
       return res.json({ success: Boolean(user), user: user ? publicUser(user) : null });
     }
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -90,7 +111,7 @@ module.exports = async function handler(req, res) {
     const { action, username, email, password } = req.body || {};
     if (action === 'logout') {
       const token = readCookies(req).pakjai_session;
-      if (token) await supabase.from('sessions').delete().eq('token_hash', hashToken(token));
+      if (token) await Session.deleteOne({ tokenHash: hashToken(token) });
       clearSessionCookie(res);
       return res.json({ success: true });
     }
@@ -100,38 +121,43 @@ module.exports = async function handler(req, res) {
       if (!username || username.trim().length < 3 || !email) return res.status(400).json({ success: false, error: 'ข้อมูลสมัครสมาชิกไม่ครบถ้วน' });
       const normalizedUsername = username.trim();
       const normalizedEmail = email.toLowerCase().trim();
-      const { data: existingUsername, error: usernameError } = await supabase.from('users').select('id').eq('username', normalizedUsername).maybeSingle();
-      if (usernameError) throw usernameError;
-      const { data: existingEmail, error: emailError } = await supabase.from('users').select('id').eq('email', normalizedEmail).maybeSingle();
-      if (emailError) throw emailError;
+      const existingUsername = await User.exists({ username: normalizedUsername });
+      const existingEmail = await User.exists({ email: normalizedEmail });
       if (existingUsername || existingEmail) return res.status(409).json({ success: false, error: 'ชื่อผู้ใช้หรือ Email นี้มีอยู่แล้ว' });
-      const { data: user, error } = await supabase.from('users').insert({ username: normalizedUsername, email: normalizedEmail, password_hash: hashPassword(password) }).select().single();
-      if (error) {
-        if (error.code === '23505') return res.status(409).json({ success: false, error: 'ชื่อผู้ใช้หรือ Email นี้มีอยู่แล้ว' });
+      let user;
+      try {
+        user = await User.create({ username: normalizedUsername, email: normalizedEmail, passwordHash: hashPassword(password) });
+      } catch (error) {
+        if (error?.code === 11000) return res.status(409).json({ success: false, error: 'ชื่อผู้ใช้หรือ Email นี้มีอยู่แล้ว' });
         throw error;
       }
-      await createSession(supabase, user, res);
+      try {
+        await createSession(user, res);
+      } catch (sessionError) {
+        console.error('Session table error:', sessionError);
+        try {
+          await User.deleteOne({ _id: user._id });
+        } catch (rollbackError) {
+          console.error('User rollback error:', rollbackError);
+        }
+        return res.status(500).json({ success: false, error: 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' });
+      }
       return res.status(201).json({ success: true, user: publicUser(user) });
     }
 
     if (action === 'login') {
       const identity = String(username || '').trim();
-      const { data: byUsername, error: usernameError } = await supabase.from('users').select('*').eq('username', identity).maybeSingle();
-      if (usernameError) throw usernameError;
-      const { data: byEmail, error: emailError } = await supabase.from('users').select('*').eq('email', identity.toLowerCase()).maybeSingle();
-      if (emailError) throw emailError;
-      const user = byUsername || byEmail;
-      if (!user || !verifyPassword(password, user.password_hash)) return res.status(401).json({ success: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
-      await createSession(supabase, user, res);
+      const user = await User.findOne({ $or: [{ username: identity }, { email: identity.toLowerCase() }] });
+      if (!user || !verifyPassword(password, user.passwordHash)) return res.status(401).json({ success: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+      await createSession(user, res);
       return res.json({ success: true, user: publicUser(user) });
     }
     return res.status(400).json({ success: false, error: 'Unknown action' });
   } catch (error) {
-    console.error('Supabase Auth API error:', error);
-    const isConfigurationError = error.message?.includes('required');
-    return res.status(isConfigurationError ? 500 : 500).json({
+    console.error('MongoDB Auth API error:', error);
+    return res.status(500).json({
       success: false,
-      error: process.env.NODE_ENV === 'production' ? 'ไม่สามารถดำเนินการสมัครสมาชิกได้ กรุณาตรวจสอบการตั้งค่า Supabase' : error.message
+      error: 'MongoDB ไม่สามารถดำเนินการได้'
     });
   }
 };
