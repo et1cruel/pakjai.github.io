@@ -29,6 +29,14 @@ module.exports = async function handler(req, res) {
       const normalizedUsername = String(username || '').trim();
       const normalizedEmail = String(email || '').trim().toLowerCase();
       if (normalizedUsername.length < 3 || !normalizedEmail) return res.status(400).json({ success: false, error: 'กรุณากรอกข้อมูลสมัครสมาชิกให้ครบถ้วน' });
+
+      // Check the profile table before creating the Supabase auth user. This
+      // prevents a duplicate username from creating an unusable auth account.
+      const { data: existingUsername } = await client.from('profiles').select('id').eq('username', normalizedUsername).maybeSingle();
+      if (existingUsername) return res.status(409).json({ success: false, error: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาเลือกชื่อผู้ใช้อื่น' });
+      const { data: existingEmail } = await client.from('profiles').select('id').eq('email', normalizedEmail).maybeSingle();
+      if (existingEmail) return res.status(409).json({ success: false, error: 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น' });
+
       const { data, error } = await client.auth.signUp({
         email: normalizedEmail,
         password,
@@ -37,7 +45,15 @@ module.exports = async function handler(req, res) {
       if (error) return res.status(400).json({ success: false, error: error.message });
       if (!data.user) return res.status(400).json({ success: false, error: 'ไม่สามารถสร้างบัญชีได้' });
       const { data: profile, error: profileError } = await client.from('profiles').upsert({ id: data.user.id, username: normalizedUsername, email: normalizedEmail, nickname: normalizedUsername }).select().single();
-      if (profileError) return res.status(500).json({ success: false, error: profileError.message });
+      if (profileError) {
+        if (profileError.code === '23505' && profileError.message.includes('profiles_username_key')) {
+          return res.status(409).json({ success: false, error: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว กรุณาเลือกชื่อผู้ใช้อื่น' });
+        }
+        if (profileError.code === '23505' && profileError.message.includes('profiles_email_key')) {
+          return res.status(409).json({ success: false, error: 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น' });
+        }
+        return res.status(500).json({ success: false, error: profileError.message });
+      }
 
       if (data.session?.access_token) {
         res.setHeader('Set-Cookie', `pakjai_access_token=${encodeURIComponent(data.session.access_token)}; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax`);
