@@ -8,7 +8,7 @@ function cookies(req) { return Object.fromEntries((req.headers.cookie || '').spl
 async function userFromRequest(req) {
   const token = cookies(req).pakjai_access_token;
   if (!token) return null;
-  const { data: { user }, error } = await supabase().auth.getUser(token);
+  const { data: { user }, error } = await supabase().auth.getUser(decodeURIComponent(token));
   return error ? null : user;
 }
 function publicProfile(profile) { return profile ? { id: profile.id, username: profile.username, email: profile.email, nickname: profile.nickname || profile.username, nicknameColor: profile.nickname_color || '#34a887', bio: profile.bio || '', profileImage: profile.avatar_path || '', coverImage: profile.cover_path || '', pet: profile.pet || '', tree: profile.tree || '', zodiac: profile.zodiac || '' } : null; }
@@ -38,6 +38,7 @@ module.exports = async function handler(req, res) {
       if (!data.user) return res.status(400).json({ success: false, error: 'ไม่สามารถสร้างบัญชีได้' });
       const { data: profile, error: profileError } = await client.from('profiles').upsert({ id: data.user.id, username: normalizedUsername, email: normalizedEmail, nickname: normalizedUsername }).select().single();
       if (profileError) return res.status(500).json({ success: false, error: profileError.message });
+
       if (data.session?.access_token) {
         res.setHeader('Set-Cookie', `pakjai_access_token=${encodeURIComponent(data.session.access_token)}; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax`);
         return res.status(201).json({ success: true, user: publicProfile(profile), emailConfirmationRequired: false });
@@ -46,8 +47,15 @@ module.exports = async function handler(req, res) {
     }
     if (action === 'login') {
       const identity = String(username || '').trim();
-      const { data: lookup } = await client.from('profiles').select('email').or(`username.eq.${identity},email.eq.${identity.toLowerCase()}`).maybeSingle();
-      const { data, error } = await client.auth.signInWithPassword({ email: lookup?.email || identity, password });
+      const normalizedIdentity = identity.toLowerCase();
+      // Resolve username and email separately. PostgREST's .or() syntax can
+      // fail for usernames containing punctuation, causing a valid account to
+      // be sent to Supabase with the username instead of its email address.
+      const { data: byUsername } = await client.from('profiles').select('email').eq('username', identity).maybeSingle();
+      const { data: byEmail } = await client.from('profiles').select('email').eq('email', normalizedIdentity).maybeSingle();
+      const loginEmail = byUsername?.email || byEmail?.email || (identity.includes('@') ? normalizedIdentity : null);
+      if (!loginEmail) return res.status(401).json({ success: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+      const { data, error } = await client.auth.signInWithPassword({ email: loginEmail, password });
       if (error || !data.user) return res.status(401).json({ success: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
       const { data: profile } = await client.from('profiles').select('*').eq('id', data.user.id).single();
       res.setHeader('Set-Cookie', `pakjai_access_token=${encodeURIComponent(data.session.access_token)}; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax`);

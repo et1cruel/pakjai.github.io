@@ -97,3 +97,6 @@ drop policy if exists storage_owner_update on storage.objects;
 create policy storage_owner_update on storage.objects for update to authenticated using ((storage.foldername(name))[1] = auth.uid()::text) with check ((storage.foldername(name))[1] = auth.uid()::text);
 drop policy if exists storage_owner_delete on storage.objects;
 create policy storage_owner_delete on storage.objects for delete to authenticated using ((storage.foldername(name))[1] = auth.uid()::text);
+
+-- Refresh PostgREST schema cache after applying this file.
+notify pgrst, 'reload schema';
