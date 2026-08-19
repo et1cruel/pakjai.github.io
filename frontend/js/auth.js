@@ -1,4 +1,4 @@
-window.PAKJAI_API_BASE_URL = window.location.port === '5500' ? 'http://localhost:3000' : '';
+window.PAKJAI_API_BASE_URL = ['5500', '5501'].includes(window.location.port) ? 'http://localhost:3000' : '';
 
 document.addEventListener('DOMContentLoaded', () => {
     setupAuthTabs();
