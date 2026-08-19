@@ -1,10 +1,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
-const authHandler = require('../api/auth.js');
+const authHandler = require('./api/auth.js');
 
 // Load environment variables
-const envPath = path.join(__dirname, '../config/.env');
+const envPath = path.join(__dirname, './config/.env');
 dotenv.config({ path: envPath });
 
 const app = express();
@@ -13,14 +13,17 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files
-app.use(express.static(path.join(__dirname, '..')));
+// Frontend static files
+const frontendPath = path.join(__dirname, '../frontend');
+app.use('/css', express.static(path.join(frontendPath, 'css')));
+app.use('/js', express.static(path.join(frontendPath, 'js')));
+app.use('/pakjai', express.static(path.join(frontendPath, 'pages')));
 
 // Auth API Route
 app.all('/api/auth', (req, res) => authHandler(req, res));
 app.all('/api/users', (req, res) => authHandler(req, res));
-app.all('/api/data', (req, res) => require('../api/data.js')(req, res));
-app.all('/api/upload', (req, res) => require('../api/upload.js')(req, res));
+app.all('/api/data', (req, res) => require('./api/data.js')(req, res));
+app.all('/api/upload', (req, res) => require('./api/upload.js')(req, res));
 
 // Redirect root to pakjai
 app.get('/', (req, res) => {
@@ -29,7 +32,7 @@ app.get('/', (req, res) => {
 
 // Fallback for spa / static routes
 app.get('/pakjai', (req, res) => {
-  res.sendFile(path.join(__dirname, '../pakjai/index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/pages/index.html'));
 });
 
 async function startServer() {

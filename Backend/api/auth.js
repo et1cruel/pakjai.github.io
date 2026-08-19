@@ -1,8 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
 
 function supabase() {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Supabase server environment is not configured');
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  const rawUrl = String(process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  const supabaseUrl = rawUrl.replace(/\/rest\/v1$/i, '');
+  if (!supabaseUrl || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Supabase server environment is not configured');
+  return createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 function logAuth(event, details = {}) {

@@ -2,12 +2,12 @@
   "name": "pakjai",
   "version": "1.0.0",
   "description": "Pakjai - Peaceful social & wellness space",
-  "main": "js/server.js",
+  "main": "Backend/server.js",
   "scripts": {
-    "test": "node --check api/auth.js && node --check api/users.js && node --check config/db.js && node --check js/server.js && node --check js/storage.js && node --check js/auth.js && node --check js/dashboard.js && node --check js/profile.js && node --check js/messages.js && node --check js/search.js && node --check js/profile-preview.js && node --check js/index.js",
-    "start": "node js/server.js",
-    "dev": "node js/server.js",
-    "build": "node --check api/auth.js && node --check api/data.js && node --check api/upload.js && node --check js/server.js && node --check js/storage.js && node --check js/auth.js && node --check js/dashboard.js && node --check js/profile.js && node --check js/messages.js && node --check js/search.js && node --check js/profile-preview.js && node --check js/index.js"
+    "test": "node --check Backend/api/auth.js && node --check Backend/api/users.js && node --check Backend/config/db.js && node --check Backend/server.js && node --check frontend/js/storage.js && node --check frontend/js/auth.js && node --check frontend/js/dashboard.js && node --check frontend/js/profile.js && node --check frontend/js/messages.js && node --check frontend/js/search.js && node --check frontend/js/profile-preview.js && node --check frontend/js/index.js",
+    "start": "node Backend/server.js",
+    "dev": "node Backend/server.js",
+    "build": "node --check Backend/api/auth.js && node --check Backend/api/data.js && node --check Backend/api/upload.js && node --check Backend/server.js && node --check frontend/js/storage.js && node --check frontend/js/auth.js && node --check frontend/js/dashboard.js && node --check frontend/js/profile.js && node --check frontend/js/messages.js && node --check frontend/js/search.js && node --check frontend/js/profile-preview.js && node --check frontend/js/index.js"
   },
   "keywords": [
     "pakjai",
