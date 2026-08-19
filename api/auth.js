@@ -36,6 +36,26 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
     const { action, username, email, password } = req.body || {};
     if (action === 'logout') { res.setHeader('Set-Cookie', 'pakjai_access_token=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax'); return res.json({ success: true }); }
+    if (action === 'reset-password') {
+      const user = await userFromRequest(req);
+      if (!user) return res.status(401).json({ success: false, error: 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว' });
+      const newPassword = String(password || '');
+      if (newPassword.length < 6) return res.status(400).json({ success: false, error: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' });
+      const { error } = await client.auth.admin.updateUserById(user.id, { password: newPassword });
+      if (error) return res.status(400).json({ success: false, error: error.message });
+      return res.json({ success: true, message: 'เปลี่ยนรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่' });
+    }
+    if (action === 'forgot-password') {
+      const recoveryEmail = String(email || '').trim().toLowerCase();
+      if (!recoveryEmail) return res.status(400).json({ success: false, error: 'กรุณากรอกอีเมล' });
+      const redirectTo = `${process.env.PUBLIC_SITE_URL || `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`}/pakjai/index.html`;
+      const { error } = await client.auth.resetPasswordForEmail(recoveryEmail, { redirectTo });
+      if (error) {
+        console.error('[auth] password_recovery_failed', { email: recoveryEmail, errorCode: error.code, errorStatus: error.status, errorMessage: error.message });
+        return res.status(502).json({ success: false, error: error.message });
+      }
+      return res.json({ success: true, message: 'ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลแล้ว กรุณาตรวจสอบ Inbox หรือ Spam' });
+    }
     if (!password || password.length < 6) return res.status(400).json({ success: false, error: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' });
     if (action === 'signup') {
       const normalizedUsername = String(username || '').trim();

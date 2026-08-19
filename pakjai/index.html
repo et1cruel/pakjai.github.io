@@ -58,6 +58,30 @@
                         <input type="password" id="loginPassword" placeholder="กรอกรหัสผ่านของคุณ" required autocomplete="current-password">
                     </div>
                     <button type="submit" class="btn-primary">เข้าสู่ระบบ 🍃</button>
+                    <button type="button" id="forgotPasswordBtn" class="auth-link">ลืมรหัสผ่าน?</button>
+                </form>
+
+                <!-- Password Recovery Form -->
+                <form id="forgotPasswordForm" class="auth-form" hidden>
+                    <div class="form-group">
+                        <label for="forgotPasswordEmail">Email ที่ใช้สมัครสมาชิก</label>
+                        <input type="email" id="forgotPasswordEmail" placeholder="yourname@example.com" required autocomplete="email">
+                    </div>
+                    <button type="submit" class="btn-primary">ส่งลิงก์รีเซ็ตรหัสผ่าน</button>
+                    <button type="button" id="backToLoginBtn" class="auth-link">กลับไปเข้าสู่ระบบ</button>
+                </form>
+
+                <!-- Set New Password Form (shown after opening the recovery link) -->
+                <form id="resetPasswordForm" class="auth-form" hidden>
+                    <div class="form-group">
+                        <label for="newPassword">รหัสผ่านใหม่</label>
+                        <input type="password" id="newPassword" placeholder="อย่างน้อย 6 ตัวอักษร" required minlength="6" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPasswordConfirm">ยืนยันรหัสผ่านใหม่</label>
+                        <input type="password" id="newPasswordConfirm" placeholder="กรอกรหัสผ่านอีกครั้ง" required minlength="6" autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn-primary">บันทึกรหัสผ่านใหม่</button>
                 </form>
 
                 <!-- Signup Form -->
