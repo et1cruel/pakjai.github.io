@@ -7,7 +7,7 @@
     "test": "node --check Backend/api/auth.js && node --check Backend/api/users.js && node --check Backend/config/db.js && node --check Backend/server.js && node --check frontend/js/storage.js && node --check frontend/js/auth.js && node --check frontend/js/dashboard.js && node --check frontend/js/profile.js && node --check frontend/js/messages.js && node --check frontend/js/search.js && node --check frontend/js/profile-preview.js && node --check frontend/js/index.js",
     "start": "node Backend/server.js",
     "dev": "node Backend/server.js",
-    "build": "node --check Backend/api/auth.js && node --check Backend/api/data.js && node --check Backend/api/upload.js && node --check Backend/server.js && node --check frontend/js/storage.js && node --check frontend/js/auth.js && node --check frontend/js/dashboard.js && node --check frontend/js/profile.js && node --check frontend/js/messages.js && node --check frontend/js/search.js && node --check frontend/js/profile-preview.js && node --check frontend/js/index.js"
+    "build": "node --check api/auth.js && node --check api/data.js && node --check api/upload.js && node --check api/users.js && node --check Backend/server.js && node --check frontend/js/storage.js && node --check frontend/js/auth.js && node --check frontend/js/dashboard.js && node --check frontend/js/profile.js && node --check frontend/js/messages.js && node --check frontend/js/search.js && node --check frontend/js/profile-preview.js && node --check frontend/js/index.js"
   },
   "keywords": [
     "pakjai",

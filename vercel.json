@@ -7,9 +7,10 @@
     }
   },
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/auth", "destination": "/api/auth.js" },
+    { "source": "/api/users", "destination": "/api/users.js" },
+    { "source": "/api/data", "destination": "/api/data.js" },
+    { "source": "/api/upload", "destination": "/api/upload.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
