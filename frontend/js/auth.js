@@ -151,6 +151,14 @@ function setupAuthForms() {
     }
 }
 
+function formatAuthError(value) {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (value.message && typeof value.message === 'string') return value.message;
+    if (value.error && typeof value.error === 'string') return value.error;
+    try { return JSON.stringify(value); } catch { return String(value); }
+}
+
 async function submitAuth(payload, successMessage) {
     try {
         const response = await fetch(`${window.PAKJAI_API_BASE_URL}/api/auth`, {
@@ -165,8 +173,8 @@ async function submitAuth(payload, successMessage) {
             result = await response.json();
         }
 
-        if (result.emailConfirmationRequired) return showMessage(result.message, 'success');
-        if (!response.ok || !result.success || !result.user) return showMessage(result.error || `การดำเนินการไม่สำเร็จ (${response.status})`, 'error');
+        if (result.emailConfirmationRequired) return showMessage(formatAuthError(result.message) || 'กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชี', 'success');
+        if (!response.ok || !result.success || !result.user) return showMessage(formatAuthError(result.error || result.message) || `การดำเนินการไม่สำเร็จ (${response.status})`, 'error');
 
         Storage.setCurrentUser(result.user);
         showMessage(successMessage, 'success');
@@ -229,7 +237,7 @@ function handleOfflineAuth(payload) {
 function showMessage(text, type) {
     const messageEl = document.getElementById('authMessage');
     if (!messageEl) return;
-    messageEl.textContent = text;
+    messageEl.textContent = formatAuthError(text);
     messageEl.className = `auth-message ${type} show`;
 }
 
