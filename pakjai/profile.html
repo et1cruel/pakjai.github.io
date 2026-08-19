@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>โปรไฟล์ - Pakjai</title>
+    <title>โปรไฟล์ - Pakjai พื้นที่พักใจ</title>
+    <meta name="description" content="ดูและแก้ไขโปรไฟล์ สัตว์และต้นไม้ประจำตัว เรื่องราวของคุณ">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="stylesheet" href="/css/profile.css">
@@ -16,7 +17,7 @@
     <nav class="navbar" aria-label="เมนูหลัก">
         <div class="nav-container">
             <div class="nav-logo">
-                <a href="/index.html">🌲 Pakjai</a>
+                <a href="/pakjai/dashboard.html" aria-label="กลับหน้า Feed">🌲 Pakjai</a>
             </div>
             <div class="nav-menu">
                 <a href="/pakjai/dashboard.html" class="nav-link">Feed</a>
@@ -39,13 +40,17 @@
                 <div class="profile-details">
                     <div class="profile-top">
                         <div>
-                            <h1 id="profileUsername" aria-live="polite">Loading...</h1>
+                            <h1 id="profileUsername" aria-live="polite">กำลังโหลด...</h1>
                             <p id="profileHandle" class="profile-handle">@username</p>
                         </div>
-                        <button type="button" id="editProfileBtn" class="btn-primary">แก้ไขโปรไฟล์</button>
+                        <button type="button" id="editProfileBtn" class="btn-primary" style="width: auto; padding: 8px 18px; border-radius: 20px;">แก้ไขโปรไฟล์ ✏️</button>
                     </div>
 
                     <p id="profileBio" class="profile-bio">ยังไม่มีประวัติส่วนตัว</p>
+                    <div class="profile-badges-row">
+                        <div id="profilePet" class="profile-pet" aria-live="polite"></div>
+                        <div id="profileZodiac" class="profile-zodiac-badge" aria-live="polite"></div>
+                    </div>
 
                     <div class="profile-stats">
                         <div class="stat-box">
@@ -66,19 +71,17 @@
         </section>
 
         <!-- Tabs -->
-        <div class="profile-tabs">
-            <button type="button" id="postsTabButton" class="tab-btn active" data-tab="posts">📸 โพสต์</button>
-            <button type="button" id="mediaTabButton" class="tab-btn" data-tab="media">🖼️ ภาพ</button>
-            <button type="button" id="followersTabButton" class="tab-btn" data-tab="followers">👥 ผู้ติดตาม</button>
+        <div class="profile-tabs" role="tablist">
+            <button type="button" id="postsTabButton" class="tab-btn active" data-tab="posts" role="tab">📸 โพสต์</button>
+            <button type="button" id="mediaTabButton" class="tab-btn" data-tab="media" role="tab">🖼️ ภาพถ่าย</button>
+            <button type="button" id="followersTabButton" class="tab-btn" data-tab="followers" role="tab">👥 ผู้ติดตาม</button>
         </div>
 
         <!-- Tab Content -->
         <div class="profile-content">
             <!-- Posts Tab -->
             <section id="postsTab" class="tab-content active" aria-labelledby="postsTabButton">
-                <div id="postsContainer" class="posts-grid">
-                    <!-- Posts will load here -->
-                </div>
+                <div id="postsContainer" class="posts-grid"></div>
                 <div id="noPostsMsg" class="no-posts-message" style="display: none;">
                     <p>ยังไม่มีโพสต์ 📭</p>
                 </div>
@@ -86,16 +89,12 @@
 
             <!-- Media Tab -->
             <section id="mediaTab" class="tab-content" aria-labelledby="mediaTabButton">
-                <div id="mediaContainer" class="media-grid">
-                    <!-- Media will load here -->
-                </div>
+                <div id="mediaContainer" class="media-grid"></div>
             </section>
 
             <!-- Followers Tab -->
             <section id="followersTab" class="tab-content" aria-labelledby="followersTabButton">
-                <div id="followersList" class="followers-list">
-                    <!-- Followers will load here -->
-                </div>
+                <div id="followersList" class="followers-list"></div>
             </section>
         </div>
     </main>
@@ -104,7 +103,7 @@
     <div id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
         <div class="modal-content">
             <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
-            <h2 id="editModalTitle">แก้ไขโปรไฟล์</h2>
+            <h2 id="editModalTitle" style="font-size: 1.3rem; margin-bottom: 16px;">แก้ไขโปรไฟล์</h2>
 
             <form id="editForm" class="edit-form">
                 <div class="form-group">
@@ -113,7 +112,7 @@
                         <img id="previewProfileImg" class="preview-img" src="" alt="Preview">
                         <div class="file-input-wrapper">
                             <input type="file" id="profilePhotoInput" accept="image/*">
-                            <label for="profilePhotoInput" class="btn-icon">📷 เปลี่ยนรูป</label>
+                            <label for="profilePhotoInput" class="btn-icon">📷 เปลี่ยนรูปโปรไฟล์</label>
                         </div>
                     </div>
                 </div>
@@ -130,8 +129,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="editUsername">ชื่อผู้ใช้</label>
-                    <input type="text" id="editUsername" disabled readonly>
+                    <label for="editUsername">ชื่อผู้ใช้ (Username)</label>
+                    <input type="text" id="editUsername" disabled readonly style="background: #f1f5f3; cursor: not-allowed;">
                 </div>
 
                 <div class="form-group nickname-group">
@@ -140,12 +139,9 @@
                     <small id="nicknameStatus" class="nickname-status"></small>
                     <div class="nickname-color-picker">
                         <label for="nicknameColor" class="nickname-color-label">
-                            <span class="nickname-color-icon">🎨</span>
-                            <span>สีชื่อเล่น</span>
+                            <span>🎨 สีชื่อเล่น</span>
                         </label>
-                        <span class="nickname-color-hint">เลือกสีที่เป็นตัวคุณ</span>
-                        <input type="color" id="nicknameColor" class="nickname-color-input" value="#34a887"
-                            title="เลือกสีชื่อเล่น">
+                        <input type="color" id="nicknameColor" class="nickname-color-input" value="#2e8b68" title="เลือกสีชื่อเล่น">
                     </div>
                 </div>
 
@@ -155,25 +151,155 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="editPet">สัตว์ประจำตัว</label>
+                    <select id="editPet" class="form-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #dce8e2;">
+                        <option value="🐱">🐱 แมว (นุ่มนิ่ม ขี้อ้อน)</option>
+                        <option value="🐶">🐶 สุนัข (ซื่อสัตย์ ร่าเริง)</option>
+                        <option value="🐰">🐰 กระต่าย (อ่อนโยน น่ารัก)</option>
+                        <option value="🦊">🦊 จิ้งจอก (เฉลียวฉลาด)</option>
+                        <option value="🐼">🐼 แพนด้า (สบายๆ ไม่รีบร้อน)</option>
+                        <option value="🐨">🐨 โคอาลา (รักสงบ)</option>
+                        <option value="🐧">🐧 เพนกวิน (อบอุ่น เป็นมิตร)</option>
+                        <option value="🦉">🦉 นกฮูก (สุขุม รอบรู้)</option>
+                        <option value="🐿️">🐿️ กระรอก (กระฉับกระเฉง)</option>
+                        <option value="🐬">🐬 โลมา (เบิกบาน อิสระ)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editTree">ต้นไม้ประจำตัว</label>
+                    <select id="editTree" class="form-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #dce8e2;">
+                        <option value="🌳">🌳 ต้นไม้ใหญ่ (ร่มรื่น มั่นคง)</option>
+                        <option value="🌲">🌲 สน (เข้มแข็ง ยืนหยัด)</option>
+                        <option value="🌴">🌴 มะพร้าว (ผ่อนคลาย ริมทะเล)</option>
+                        <option value="🎋">🎋 ไผ่ (ยืดหยุ่น สงบเย็น)</option>
+                        <option value="🌵">🌵 กระบองเพชร (ทนทาน พึ่งพาตนเอง)</option>
+                        <option value="🌿">🌿 สมุนไพร (เยียวยา สดชื่น)</option>
+                        <option value="🍀">🍀 โคลเวอร์ (นำพาโชคดี)</option>
+                        <option value="🌸">🌸 ซากุระ (งดงาม สดใส)</option>
+                        <option value="🌱">🌱 ต้นอ่อน (เริ่มต้นสิ่งใหม่)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editZodiac">⭐ ดาวประจำตัว (12 นักษัตร)</label>
+                    <div class="zodiac-grid" id="zodiacGrid">
+                        <label class="zodiac-option" title="ชวด - ปีหนู">
+                            <input type="radio" name="zodiac" value="🐭 ชวด (ปีหนู)">
+                            <span class="zodiac-icon">🐭</span>
+                            <span class="zodiac-name">ชวด</span>
+                        </label>
+                        <label class="zodiac-option" title="ฉลู - ปีวัว">
+                            <input type="radio" name="zodiac" value="🐮 ฉลู (ปีวัว)">
+                            <span class="zodiac-icon">🐮</span>
+                            <span class="zodiac-name">ฉลู</span>
+                        </label>
+                        <label class="zodiac-option" title="ขาล - ปีเสือ">
+                            <input type="radio" name="zodiac" value="🐯 ขาล (ปีเสือ)">
+                            <span class="zodiac-icon">🐯</span>
+                            <span class="zodiac-name">ขาล</span>
+                        </label>
+                        <label class="zodiac-option" title="เถาะ - ปีกระต่าย">
+                            <input type="radio" name="zodiac" value="🐰 เถาะ (ปีกระต่าย)">
+                            <span class="zodiac-icon">🐰</span>
+                            <span class="zodiac-name">เถาะ</span>
+                        </label>
+                        <label class="zodiac-option" title="มะโรง - ปีมังกร">
+                            <input type="radio" name="zodiac" value="🐲 มะโรง (ปีมังกร)">
+                            <span class="zodiac-icon">🐲</span>
+                            <span class="zodiac-name">มะโรง</span>
+                        </label>
+                        <label class="zodiac-option" title="มะเส็ง - ปีงู">
+                            <input type="radio" name="zodiac" value="🐍 มะเส็ง (ปีงู)">
+                            <span class="zodiac-icon">🐍</span>
+                            <span class="zodiac-name">มะเส็ง</span>
+                        </label>
+                        <label class="zodiac-option" title="มะเมีย - ปีม้า">
+                            <input type="radio" name="zodiac" value="🐴 มะเมีย (ปีม้า)">
+                            <span class="zodiac-icon">🐴</span>
+                            <span class="zodiac-name">มะเมีย</span>
+                        </label>
+                        <label class="zodiac-option" title="มะแม - ปีแพะ">
+                            <input type="radio" name="zodiac" value="🐐 มะแม (ปีแพะ)">
+                            <span class="zodiac-icon">🐐</span>
+                            <span class="zodiac-name">มะแม</span>
+                        </label>
+                        <label class="zodiac-option" title="วอก - ปีลิง">
+                            <input type="radio" name="zodiac" value="🐵 วอก (ปีลิง)">
+                            <span class="zodiac-icon">🐵</span>
+                            <span class="zodiac-name">วอก</span>
+                        </label>
+                        <label class="zodiac-option" title="ระกา - ปีไก่">
+                            <input type="radio" name="zodiac" value="🐔 ระกา (ปีไก่)">
+                            <span class="zodiac-icon">🐔</span>
+                            <span class="zodiac-name">ระกา</span>
+                        </label>
+                        <label class="zodiac-option" title="จอ - ปีสุนัข">
+                            <input type="radio" name="zodiac" value="🐶 จอ (ปีสุนัข)">
+                            <span class="zodiac-icon">🐶</span>
+                            <span class="zodiac-name">จอ</span>
+                        </label>
+                        <label class="zodiac-option" title="กุน - ปีหมู">
+                            <input type="radio" name="zodiac" value="🐷 กุน (ปีหมู)">
+                            <span class="zodiac-icon">🐷</span>
+                            <span class="zodiac-name">กุน</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="editBio">ประวัติส่วนตัว (Bio)</label>
-                    <textarea id="editBio" placeholder="เขียนเกี่ยวกับตัวคุณ..." maxlength="150"></textarea>
+                    <textarea id="editBio" placeholder="เขียนเกี่ยวกับตัวคุณ ความคิด หรือสิ่งที่ชอบ..." maxlength="150"></textarea>
                     <small id="bioCount">0/150</small>
                 </div>
 
-                <button type="submit" class="btn-primary">บันทึกการเปลี่ยนแปลง</button>
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">บันทึกการเปลี่ยนแปลง 💾</button>
             </form>
         </div>
     </div>
 
-    <!-- View User Modal (for viewing other profiles) -->
-    <div id="userModal" class="modal" role="dialog" aria-modal="true" aria-label="ข้อมูลผู้ใช้">
-        <div class="modal-content user-modal-content">
+    <!-- View Post Modal -->
+    <div id="postModal" class="modal" role="dialog" aria-modal="true" aria-label="รายละเอียดโพสต์">
+        <div class="modal-content">
             <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
-            <div id="userModalBody">
-                <!-- User info will load here -->
+            <div id="postModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Edit Post Modal -->
+    <div id="editPostModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editPostModalTitle">
+        <div class="modal-content edit-post-modal-content">
+            <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
+            <h3 id="editPostModalTitle">✏️ แก้ไขโพสต์พักใจ</h3>
+            <div id="editPostPreview" class="edit-post-preview-box" style="display: none;"></div>
+            <div class="form-group" style="margin-bottom: 8px;">
+                <label for="editPostCaption">ข้อความโพสต์</label>
+                <textarea id="editPostCaption" class="edit-post-textarea" placeholder="เขียนข้อความหรือความรู้สึกที่ต้องการแบ่งปัน..."></textarea>
+            </div>
+            <div class="edit-modal-actions">
+                <button type="button" id="cancelEditBtn" class="btn-ghost">ยกเลิก</button>
+                <button type="button" id="saveEditPostBtn" class="btn-primary" style="width: auto; padding: 10px 22px;">บันทึกการแก้ไข 🍃</button>
             </div>
         </div>
     </div>
+
+    <!-- Delete Post Confirmation Modal -->
+    <div id="deletePostModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal-content delete-post-modal-content">
+            <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
+            <div class="delete-icon-badge">🗑️</div>
+            <h3 id="deleteModalTitle">ต้องการลบโพสต์นี้หรือไม่?</h3>
+            <p class="delete-post-desc">โพสต์และความคิดเห็นที่เกี่ยวข้องจะถูกลบออกจากพื้นที่พักใจ และไม่สามารถกู้คืนได้</p>
+            <div id="deletePostSnippet" class="delete-post-snippet"></div>
+            <div class="delete-modal-actions">
+                <button type="button" id="cancelDeleteBtn" class="btn-ghost">เก็บโพสต์ไว้</button>
+                <button type="button" id="confirmDeleteBtn" class="btn-danger">ลบโพสต์ทันที 🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="pakjai-toast-container" aria-live="polite"></div>
 
     <script src="/js/storage.js"></script>
     <script src="/js/profile.js"></script>

@@ -1,0 +1,26 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Pakjai LocalStorage migration</title>
+<p id="status">กำลังย้ายข้อมูล...</p>
+<script src="../js/storage.js"></script>
+<script>
+  (async () => {
+    const status = document.getElementById('status');
+    const once = 'pakjai-supabase-migration-v1';
+    if (localStorage.getItem(once)) { status.textContent = 'เคย้ายข้อมูลแล้ว'; return; }
+    try {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+      const mine = users.find(u => u.email === Storage.getCurrentUser()?.email || u.username === Storage.getCurrentUser()?.username);
+      const result = { profile: false, posts: 0 };
+      if (mine && Storage.getCurrentUser()) {
+        await Storage.saveProfile({ nickname: mine.nickname || '', nickname_color: mine.nicknameColor || '#34a887', bio: mine.bio || '', pet: mine.pet || '', tree: mine.tree || '', zodiac: mine.zodiac || '' }); result.profile = true;
+      }
+      for (const post of posts.filter(p => p.username === mine?.username || p.userId === mine?.id)) {
+        await Storage.createPost({ caption: post.caption || '', visibility: post.visibility || 'public', image_path: null, audio_path: null }); result.posts++;
+      }
+      localStorage.setItem(once, JSON.stringify({ at: new Date().toISOString(), result }));
+      status.textContent = `ย้ายข้อมูลสำเร็จ: Profile ${result.profile ? 'แล้ว' : 'ไม่มีข้อมูล'}, Posts ${result.posts}`;
+    } catch (e) { console.error(e); status.textContent = 'ย้ายข้อมูลไม่สำเร็จ กรุณาตรวจสอบ Console'; }
+  })();
+</script>

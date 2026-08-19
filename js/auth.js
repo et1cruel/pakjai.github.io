@@ -1,45 +1,89 @@
 window.PAKJAI_API_BASE_URL = window.location.port === '5500' ? 'http://localhost:3000' : '';
 
-// Tab switching
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
+document.addEventListener('DOMContentLoaded', () => {
+    setupAuthTabs();
+    setupAuthForms();
+    checkExistingSession();
+});
 
-        // Update active tab button
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+function setupAuthTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const forms = document.querySelectorAll('.auth-form');
+    const savedTab = sessionStorage.getItem('pakjaiAuthTab') || 'login';
 
-        // Update active form
-        document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-        document.getElementById(tab + 'Form').classList.add('active');
+    function switchTab(tabName, shouldFocus = false) {
+        tabs.forEach(btn => {
+            const isActive = btn.dataset.tab === tabName;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', String(isActive));
+        });
 
-        // Clear message
-        document.getElementById('authMessage').textContent = '';
-        document.getElementById('authMessage').className = 'auth-message';
+        forms.forEach(form => {
+            const isActive = form.id === `${tabName}Form`;
+            form.classList.toggle('active', isActive);
+            form.hidden = !isActive;
+        });
+
+        sessionStorage.setItem('pakjaiAuthTab', tabName);
+        clearMessage();
+
+        if (shouldFocus) {
+            const activeForm = document.getElementById(`${tabName}Form`);
+            activeForm?.querySelector('input')?.focus();
+        }
+    }
+
+    tabs.forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab, true));
     });
-});
 
-// Login: credentials are verified by the server; passwords never enter localStorage.
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    await submitAuth({ action: 'login', username, password }, 'เข้าสู่ระบบสำเร็จ ✓');
-});
+    switchTab(savedTab);
+}
 
-// Signup: the API persists the user in Supabase (Vercel instances are stateless).
-document.getElementById('signupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('signupUsername').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('signupPasswordConfirm').value;
+function setupAuthForms() {
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
 
-    if (username.length < 3) return showMessage('ชื่อผู้ใช้ต้องมากกว่า 3 ตัวอักษร', 'error');
-    if (password.length < 6) return showMessage('รหัสผ่านต้องมากกว่า 6 ตัวอักษร', 'error');
-    if (password !== confirmPassword) return showMessage('รหัสผ่านไม่ตรงกัน', 'error');
-    await submitAuth({ action: 'signup', username, email, password }, 'สมัครสมาชิกสำเร็จ ✓');
-});
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                return showMessage('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน', 'error');
+            }
+
+            setLoading(loginForm, true, 'กำลังเข้าสู่ระบบ...');
+            await submitAuth({ action: 'login', username, password }, 'เข้าสู่ระบบสำเร็จ 🍃 กำลังพาคุณไปที่หน้าหลัก...');
+            setLoading(loginForm, false, 'เข้าสู่ระบบ');
+        });
+    }
+
+    if (signupForm) {
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupPasswordConfirm').value;
+
+            if (username.length < 3) {
+                return showMessage('ชื่อผู้ใช้ต้องมีความยาวอย่างน้อย 3 ตัวอักษร', 'error');
+            }
+            if (password.length < 6) {
+                return showMessage('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร', 'error');
+            }
+            if (password !== confirmPassword) {
+                return showMessage('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน', 'error');
+            }
+
+            setLoading(signupForm, true, 'กำลังสร้างบัญชี...');
+            await submitAuth({ action: 'signup', username, email, password }, 'สมัครสมาชิกสำเร็จ 🌲 ยินดีต้อนรับสู่ Pakjai!');
+            setLoading(signupForm, false, 'สมัครสมาชิก');
+        });
+    }
+}
 
 async function submitAuth(payload, successMessage) {
     try {
@@ -48,32 +92,102 @@ async function submitAuth(payload, successMessage) {
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(payload)
         });
+
         const contentType = response.headers.get('content-type') || '';
-        const result = contentType.includes('application/json') ? await response.json() : {};
-        if (!response.ok || !result.success || !result.user) {
-            return showMessage(result.error || `เซิร์ฟเวอร์ตอบกลับผิดพลาด (${response.status})`, 'error');
+        let result = {};
+        if (contentType.includes('application/json')) {
+            result = await response.json();
         }
+
+        if (result.emailConfirmationRequired) return showMessage(result.message, 'success');
+        if (!response.ok || !result.success || !result.user) return showMessage(result.error || `การดำเนินการไม่สำเร็จ (${response.status})`, 'error');
+
         Storage.setCurrentUser(result.user);
         showMessage(successMessage, 'success');
-        window.setTimeout(() => { window.location.assign('/pakjai/dashboard.html'); }, 500);
+        setTimeout(() => window.location.assign('/pakjai/dashboard.html'), 600);
     } catch (error) {
-        console.error('Authentication request failed:', error);
-        showMessage(`เกิดข้อผิดพลาด: ${error.message}`, 'error');
+        console.error('Supabase Auth API unavailable:', error);
+        showMessage('ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่อีกครั้ง', 'error');
     }
+}
+
+function handleOfflineAuth(payload) {
+    const { action, username, email } = payload;
+    const users = Storage.getUsers();
+
+    if (action === 'login') {
+        const user = users.find(u =>
+            u.username.toLowerCase() === username.toLowerCase() ||
+            u.email?.toLowerCase() === username.toLowerCase()
+        );
+        if (user) return user;
+        // Auto create demo user if local dev
+        const newUser = {
+            id: 'u-' + Date.now(),
+            username,
+            nickname: username,
+            nicknameColor: '#2e8b68',
+            email: `${username}@local.test`,
+            bio: 'สมาชิกใหม่แห่งพื้นที่พักใจ 🍃',
+            pet: '🐱',
+            tree: '🌳',
+            followers: [],
+            following: ['user-nature-guide'],
+            posts: []
+        };
+        Storage.saveUser(newUser);
+        return newUser;
+    }
+
+    if (action === 'signup') {
+        const newUser = {
+            id: 'u-' + Date.now(),
+            username,
+            nickname: username,
+            nicknameColor: '#2e8b68',
+            email,
+            bio: 'สมาชิกใหม่แห่งพื้นที่พักใจ 🍃',
+            pet: '🐱',
+            tree: '🌳',
+            followers: [],
+            following: ['user-nature-guide'],
+            posts: []
+        };
+        Storage.saveUser(newUser);
+        return newUser;
+    }
+
+    return null;
 }
 
 function showMessage(text, type) {
     const messageEl = document.getElementById('authMessage');
+    if (!messageEl) return;
     messageEl.textContent = text;
-    messageEl.className = `auth-message ${type}`;
+    messageEl.className = `auth-message ${type} show`;
 }
 
-// Check if already logged in
-window.addEventListener('load', async () => {
+function clearMessage() {
+    const messageEl = document.getElementById('authMessage');
+    if (!messageEl) return;
+    messageEl.textContent = '';
+    messageEl.className = 'auth-message';
+}
+
+function setLoading(form, isLoading, text) {
+    const btn = form.querySelector('button[type="submit"]');
+    if (!btn) return;
+    btn.disabled = isLoading;
+    btn.textContent = text;
+}
+
+async function checkExistingSession() {
     try {
         const currentUser = await Storage.getServerSession();
-        if (currentUser) window.location.assign('/pakjai/dashboard.html');
+        if (currentUser && currentUser.username) {
+            window.location.assign('/pakjai/dashboard.html');
+        }
     } catch (error) {
-        console.warn('Session check failed:', error);
+        console.warn('Session verification error:', error);
     }
-});
+}

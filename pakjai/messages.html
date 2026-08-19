@@ -1,54 +1,50 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ข้อความ - Pakjai</title>
+    <title>ข้อความ - Pakjai พื้นที่พักใจ</title>
+    <meta name="description" content="ส่งต่อความรู้สึกและพูดคุยกับเพื่อนในพื้นที่พักใจ">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="stylesheet" href="/css/messages.css">
 </head>
+
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar">
+    <nav class="navbar" aria-label="เมนูหลัก">
         <div class="nav-container">
             <div class="nav-logo">
-                <a href="/index.html">🌲 Pakjai</a>
+                <a href="/pakjai/dashboard.html" aria-label="กลับหน้า Feed">🌲 Pakjai</a>
             </div>
             <div class="nav-menu">
                 <a href="/pakjai/dashboard.html" class="nav-link">Feed</a>
                 <a href="/pakjai/search.html" class="nav-link">ค้นหา</a>
-                <a href="/pakjai/messages.html" class="nav-link active">ข้อความ</a>
+                <a href="/pakjai/messages.html" class="nav-link active" aria-current="page">ข้อความ</a>
                 <a href="/pakjai/profile.html" class="nav-link">โปรไฟล์</a>
-                <button id="logoutBtn" class="nav-link logout-btn">ออกจากระบบ</button>
+                <button type="button" id="logoutBtn" class="nav-link logout-btn">ออกจากระบบ</button>
             </div>
         </div>
     </nav>
 
     <div class="messages-container">
         <!-- Conversations Sidebar -->
-        <aside class="conversations-sidebar">
+        <aside class="conversations-sidebar" id="conversationsSidebar">
             <div class="sidebar-header">
-                <h2>ข้อความ</h2>
-                <button id="newChatBtn" class="btn-new-chat">✏️ แชทใหม่</button>
+                <h2>ข้อความ 💬</h2>
+                <button type="button" id="newChatBtn" class="btn-new-chat">✏️ แชทใหม่</button>
             </div>
 
             <div class="search-conversations">
-                <input
-                    type="text"
-                    id="conversationSearch"
-                    class="conversation-search-input"
-                    placeholder="ค้นหาแชท..."
-                >
+                <input type="text" id="conversationSearch" class="conversation-search-input" placeholder="🔍 ค้นหาแชท..." autocomplete="off">
             </div>
 
-            <div id="conversationsList" class="conversations-list">
-                <!-- Conversations will load here -->
-            </div>
+            <div id="conversationsList" class="conversations-list"></div>
 
             <div id="emptyConversations" class="empty-state" style="display: none;">
-                <p>ยังไม่มีแชท 💬</p>
-                <p class="text-small">เริ่มแชทกับผู้ใช้คนอื่น</p>
+                <p>ยังไม่มีข้อความแชท 💬</p>
+                <p class="text-small">กดปุ่ม "แชทใหม่" เพื่อเริ่มพูดคุยกับเพื่อน</p>
             </div>
         </aside>
 
@@ -56,8 +52,8 @@
         <main class="chat-window">
             <div id="noChatSelected" class="no-chat-selected">
                 <div class="no-chat-content">
-                    <h3>เลือกแชทเพื่อเริ่มพูดคุย 💬</h3>
-                    <p>เลือกจากรายชื่อผู้ติดต่อหรือสร้างแชทใหม่</p>
+                    <h3>เลือกแชทเพื่อเริ่มพูดคุย 🍃</h3>
+                    <p>เลือกจากรายชื่อผู้ติดต่อทางซ้าย หรือสร้างแชทใหม่</p>
                 </div>
             </div>
 
@@ -68,55 +64,40 @@
                         <img id="chatUserAvatar" class="chat-user-avatar" src="" alt="Avatar">
                         <div class="chat-user-info">
                             <h3 id="chatUserName">User Name</h3>
-                            <span id="chatUserStatus" class="user-status">ออนไลน์</span>
+                            <span id="chatUserStatus" class="user-status">ออนไลน์ 🟢</span>
                         </div>
                     </div>
-                    <button id="closeChat" class="close-chat-btn">✕</button>
+                    <button type="button" id="closeChat" class="close-chat-btn" aria-label="ปิดแชท">✕</button>
                 </div>
 
                 <!-- Messages Area -->
-                <div id="messagesArea" class="messages-area">
-                    <!-- Messages will load here -->
-                </div>
+                <div id="messagesArea" class="messages-area"></div>
 
                 <!-- Message Input -->
                 <div class="chat-input-area">
-                    <input
-                        type="text"
-                        id="messageInput"
-                        class="message-input"
-                        placeholder="เขียนข้อความ..."
-                        autocomplete="off"
-                    >
-                    <button id="sendMessageBtn" class="send-message-btn">ส่ง</button>
+                    <input type="text" id="messageInput" class="message-input" placeholder="เขียนข้อความที่อบอุ่นและส่งต่อกำลังใจ..." autocomplete="off">
+                    <button type="button" id="sendMessageBtn" class="send-message-btn">ส่ง 🚀</button>
                 </div>
             </div>
         </main>
     </div>
 
     <!-- New Chat Modal -->
-    <div id="newChatModal" class="modal">
+    <div id="newChatModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="newChatTitle">
         <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <h2>สร้างแชทใหม่</h2>
+            <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
+            <h2 id="newChatTitle" style="font-size: 1.25rem; margin-bottom: 12px;">เริ่มการสนทนาใหม่ 💬</h2>
 
             <div class="new-chat-search">
-                <input
-                    type="text"
-                    id="newChatSearchInput"
-                    class="search-input"
-                    placeholder="ค้นหาผู้ใช้..."
-                    autocomplete="off"
-                >
+                <input type="text" id="newChatSearchInput" class="form-group" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid #dce8e2;" placeholder="พิมพ์ชื่อผู้ใช้ที่ต้องการค้นหา..." autocomplete="off">
             </div>
 
-            <div id="newChatUsersList" class="new-chat-users-list">
-                <!-- Users will load here -->
-            </div>
+            <div id="newChatUsersList" class="new-chat-users-list"></div>
         </div>
     </div>
 
     <script src="/js/storage.js"></script>
     <script src="/js/messages.js"></script>
 </body>
+
 </html>

@@ -14,21 +14,29 @@
         return node.innerHTML;
     }
 
-    function findUser(target) {
+    async function findUser(target) {
         const username = target.closest('[data-profile-username]')?.dataset.profileUsername;
-        return username ? Storage.getUser(username) : null;
+        if (!username) return null;
+        try { return (await Storage.getProfile(username)).user; } catch { return null; }
     }
 
-    function render(user) {
+    async function render(user) {
         activeUser = user;
         const avatar = user.profileImage || (typeof generateAvatar === 'function' ? generateAvatar(user.username) : '');
-        preview.innerHTML = `<img src="${avatar}" alt="รูปโปรไฟล์ของ ${escapeHtml(user.username)}">
+        let userPostCount = 0;
+        try { userPostCount = (await Storage.getProfile(user.username)).posts?.length || 0; } catch {}
+        const zodiacLine = user.zodiac ? `<small style="color:#7c3aed;">⭐ ${escapeHtml(user.zodiac)}</small>` : '';
+
+        preview.innerHTML = `
+            <img src="${avatar}" alt="รูปโปรไฟล์ของ ${escapeHtml(user.username)}">
             <div class="profile-hover-card-body">
-                <strong>${escapeHtml(user.nickname || user.username)}</strong>
+                <strong style="color: ${user.nicknameColor || '#2e8b68'}">${escapeHtml(user.nickname || user.username)}</strong>
                 <span>@${escapeHtml(user.username)}</span>
+                ${zodiacLine}
                 <p>${escapeHtml(user.bio || 'ไม่มีประวัติส่วนตัว')}</p>
-                <small>โพสต์ ${user.posts?.length || 0} · ผู้ติดตาม ${user.followers?.length || 0}</small>
-            </div>`;
+                <small>โพสต์ ${userPostCount} · ผู้ติดตาม ${user.followers?.length || 0}</small>
+            </div>
+        `;
     }
 
     function position(target) {
@@ -37,11 +45,11 @@
         preview.style.top = `${Math.min(window.innerHeight - preview.offsetHeight - 8, rect.bottom + 8)}px`;
     }
 
-    function show(target) {
-        const user = findUser(target);
+    async function show(target) {
+        const user = await findUser(target);
         if (!user) return;
         clearTimeout(hideTimer);
-        render(user);
+        await render(user);
         preview.hidden = false;
         position(target);
     }
@@ -52,22 +60,21 @@
         }, 180);
     }
 
-    document.addEventListener('mouseover', event => {
+    document.addEventListener('mouseover', async event => {
         const target = event.target.closest('[data-profile-username]');
-        if (target) show(target);
+        if (target) await show(target);
     });
+
     document.addEventListener('mouseout', event => {
         if (event.target.closest('[data-profile-username]')) hide();
     });
+
     preview.addEventListener('mouseenter', () => clearTimeout(hideTimer));
     preview.addEventListener('mouseleave', hide);
+
     preview.addEventListener('click', () => {
-        if (activeUser) window.location.assign(`/pakjai/profile.html?username=${encodeURIComponent(activeUser.username)}`);
-    });
-    document.addEventListener('click', event => {
-        const target = event.target.closest('[data-profile-username]');
-        if (!target || event.target.closest('button,a')) return;
-        const user = findUser(target);
-        if (user) window.location.assign(`/pakjai/profile.html?username=${encodeURIComponent(user.username)}`);
+        if (activeUser) {
+            window.location.assign(`/pakjai/profile.html?username=${encodeURIComponent(activeUser.username)}`);
+        }
     });
 })();

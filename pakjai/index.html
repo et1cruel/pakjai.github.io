@@ -4,68 +4,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pakjai</title>
+    <title>Pakjai - พื้นที่พักใจสำหรับคนอยากพักเรื่องวุ่นวาย</title>
+    <meta name="description" content="Pakjai พื้นที่พักใจ สังคมสงบสุข แบ่งปันความรู้สึก กำลังใจ และธรรมชาติบำบัด">
     <link rel="stylesheet" href="/css/style.css">
-
 </head>
 
 <body>
-    <div class="container">
-        <div class="hero">
-            <div class="hero-content">
-                <h1>Welcome to Pakjai </h1>
-                <h1> พื้นที่พักใจสำหรับคนอยากพักเรื่องวุ่นวาย</h1>
-                <div class="subtitle">พักผ่อนกับธรรมชาติ สีเขียวและความสงบใจ</div>
+    <div class="landing-wrapper">
+        <div class="auth-container">
+            <!-- Hero Side -->
+            <div class="hero">
+                <div class="hero-badge">
+                    <span>🌲 พื้นที่ใจฟู & ความสงบ</span>
+                </div>
+                <h1>Welcome to Pakjai</h1>
+                <p class="subtitle">พื้นที่พักใจสำหรับคนที่อยากพักจากเรื่องราววุ่นวาย เติมพลังบวกด้วยธรรมชาติ มิตรภาพ และความสบายใจ</p>
+                <div class="hero-features">
+                    <div class="hero-feature-item">
+                        <span class="icon">🍃</span>
+                        <span>แบ่งปันเรื่องราว รูปภาพ และเสียงแห่งความสงบ</span>
+                    </div>
+                    <div class="hero-feature-item">
+                        <span class="icon">🤗</span>
+                        <span>ส่งต่อความอบอุ่นด้วยปุ่มกอดและคำขอบคุณ</span>
+                    </div>
+                    <div class="hero-feature-item">
+                        <span class="icon">🦉</span>
+                        <span>เลือกสัตว์และต้นไม้ประจำตัวแทนใจ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auth Box Side -->
+            <div class="auth-box">
+                <div class="auth-header">
+                    <h2>เริ่มต้นพักใจ</h2>
+                    <p>เข้าสู่ระบบหรือสร้างบัญชีใหม่เพื่อร่วมเดินทาง</p>
+                </div>
+
+                <div class="auth-tabs" role="tablist">
+                    <button class="tab-btn active" data-tab="login" role="tab" aria-selected="true">เข้าสู่ระบบ</button>
+                    <button class="tab-btn" data-tab="signup" role="tab" aria-selected="false">สมัครสมาชิก</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="auth-form active">
+                    <div class="form-group">
+                        <label for="loginUsername">ชื่อผู้ใช้ หรือ Email</label>
+                        <input type="text" id="loginUsername" placeholder="เช่น yourname หรือ email@domain.com" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">รหัสผ่าน</label>
+                        <input type="password" id="loginPassword" placeholder="กรอกรหัสผ่านของคุณ" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn-primary">เข้าสู่ระบบ 🍃</button>
+                </form>
+
+                <!-- Signup Form -->
+                <form id="signupForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="signupUsername">ชื่อผู้ใช้ (Username)</label>
+                        <input type="text" id="signupUsername" placeholder="อย่างน้อย 3 ตัวอักษร" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" placeholder="yourname@example.com" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">รหัสผ่าน</label>
+                        <input type="password" id="signupPassword" placeholder="อย่างน้อย 6 ตัวอักษร" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPasswordConfirm">ยืนยันรหัสผ่าน</label>
+                        <input type="password" id="signupPasswordConfirm" placeholder="กรอกรหัสผ่านอีกครั้ง" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn-primary">สมัครสมาชิก 🌲</button>
+                </form>
+
+                <div id="authMessage" class="auth-message" role="status" aria-live="polite"></div>
             </div>
         </div>
-    </div>
-    <div class="auth-box">
-        <div class="auth-tabs">
-            <button class="tab-btn active" data-tab="login">เข้าสู่ระบบ</button>
-            <button class="tab-btn" data-tab="signup">สมัครสมาชิก</button>
-        </div>
-    </div>
-    <!-- Login form -->
-    <form id="loginForm" class="auth-form active">
-        <div class="form-group">
-            <label>ชื่อผู้ใช้ / Email</label>
-            <input type="text" id="loginUsername" required>
-        </div>
-        <div class="form-group">
-            <label>รหัสผ่าน</label>
-            <input type="password" id="loginPassword" required>
-        </div>
-        <button type="submit" class="btn-primary">เข้าสู่ระบบ</button>
-    </form>
-
-    <!-- Signup form -->
-    <form id="signupForm" class="auth-form">
-        <div class="form-group">
-            <label>ชื่อผู้ใช้</label>
-            <input type="text" id="signupUsername" required>
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="signupEmail" required>
-        </div>
-        <div class="form-group">
-            <label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label>
-            <input type="password" id="signupPassword" required>
-        </div>
-        <div class="form-group">
-            <label>ยืนยันรหัสผ่าน</label>
-            <input type="password" id="signupPasswordConfirm" required>
-        </div>
-        <button type="submit" class="btn-primary">สมัครสมาชิก</button>
-    </form>
-
-    <div id="authMessage" class="auth-message">
-
     </div>
 
     <script src="/js/storage.js"></script>
     <script src="/js/auth.js"></script>
-
+    <script src="/js/index.js"></script>
 </body>
 
 </html>

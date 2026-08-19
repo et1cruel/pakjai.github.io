@@ -4,25 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feed - Pakjai</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/dashboard.css">
-    <link rel="stylesheet" href="../css/profile-preview.css">
+    <title>Feed - Pakjai พื้นที่พักใจ</title>
+    <meta name="description" content="หน้าฟีดแบ่งปันเรื่องราว กำลังใจ และธรรมชาติบำบัด">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/profile-preview.css">
 </head>
 
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar">
+    <nav class="navbar" aria-label="เมนูหลัก">
         <div class="nav-container">
             <div class="nav-logo">
-                <a href="/index.html">🌲 Pakjai</a>
+                <a href="/pakjai/dashboard.html" aria-label="กลับหน้า Feed">🌲 Pakjai</a>
             </div>
             <div class="nav-menu">
-                <a href="/pakjai/dashboard.html" class="nav-link active">Feed</a>
+                <a href="/pakjai/dashboard.html" class="nav-link active" aria-current="page">Feed</a>
                 <a href="/pakjai/search.html" class="nav-link">ค้นหา</a>
                 <a href="/pakjai/messages.html" class="nav-link">ข้อความ</a>
                 <a href="/pakjai/profile.html" class="nav-link">โปรไฟล์</a>
-                <button id="logoutBtn" class="nav-link logout-btn">ออกจากระบบ</button>
+                <button type="button" id="logoutBtn" class="nav-link logout-btn">ออกจากระบบ</button>
             </div>
         </div>
     </nav>
@@ -32,7 +33,7 @@
         <aside class="sidebar">
             <div class="user-card">
                 <img id="sidebarProfileImg" class="sidebar-profile-img" src="" alt="Profile" data-profile-username="">
-                <h3 id="sidebarUsername" data-profile-username="">Loading...</h3>
+                <h3 id="sidebarUsername" data-profile-username="">กำลังโหลด...</h3>
                 <p id="sidebarBio" class="sidebar-bio">ยังไม่มีประวัติส่วนตัว</p>
                 <div class="sidebar-stats">
                     <div class="stat">
@@ -50,7 +51,7 @@
             <div class="trending">
                 <h4>🔥 กำลังนิยม</h4>
                 <div id="trendingList" class="trending-list">
-                    <!-- Trending tags will be here -->
+                    <!-- Trending tags will load dynamically -->
                 </div>
             </div>
         </aside>
@@ -62,30 +63,60 @@
                 <div class="create-post-header">
                     <img id="createPostImg" class="create-post-profile-img" src="" alt="Profile">
                     <input type="text" id="postCaption" class="create-post-input"
-                        placeholder="ตอนนี้คุณสนใจจะแบ่งปันอะไรไหมครับ?">
+                        placeholder="ตอนนี้คุณมีอะไรอยากแบ่งปันหรืออยากพักใจไหมครับ?">
                 </div>
                 <div class="create-post-actions">
                     <div class="file-input-wrapper">
                         <input type="file" id="postImage" accept="image/*">
-                        <label for="postImage" class="btn-icon">🖼️ รูป</label>
+                        <label for="postImage" class="btn-icon">🖼️ รูปภาพ</label>
                     </div>
-                    <button type="button" id="openCameraBtn" class="btn-icon camera-btn">📸ถ่ายรูป</button>
-                    <button id="createPostBtn" class="btn-primary">โพสต์</button>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="postAudio" accept="audio/*">
+                        <label for="postAudio" class="btn-icon">🎵 เสียง</label>
+                    </div>
+                    <button type="button" id="openCameraBtn" class="btn-icon camera-btn">📸 ถ่ายรูป</button>
+                    <div class="emoji-picker-wrapper">
+                        <button type="button" id="emojiBtn" class="btn-icon" aria-expanded="false" aria-controls="emojiPicker">😊 อีโมจิ</button>
+                        <div id="emojiPicker" class="emoji-picker" role="dialog" aria-label="เลือกอีโมจิ" hidden>
+                            <div class="emoji-picker-header">
+                                <strong>เติมความรู้สึกให้โพสต์</strong>
+                                <span>เลือกอีโมจิได้ตามใจเลย</span>
+                            </div>
+                            <label class="emoji-search" for="emojiSearch">
+                                <span aria-hidden="true">🔍</span>
+                                <input id="emojiSearch" type="search" placeholder="ค้นหาอีโมจิ" autocomplete="off">
+                            </label>
+                            <div id="emojiCategories" class="emoji-categories" role="tablist" aria-label="หมวดหมู่อีโมจิ"></div>
+                            <div id="emojiOptions" class="emoji-options" aria-live="polite"></div>
+                        </div>
+                    </div>
+
+                    <!-- Visibility Toggle -->
+                    <div class="post-visibility-toggle" title="เลือกว่าจะโพสต์แบบ Public หรือ Private">
+                        <button type="button" id="visibilityBtn" class="visibility-btn public" aria-pressed="false">
+                            <span class="visibility-icon">🌍</span>
+                            <span class="visibility-label">สาธารณะ</span>
+                        </button>
+                    </div>
+
+                    <button type="button" id="createPostBtn" class="btn-primary">โพสต์ 🍃</button>
                 </div>
                 <div id="imagePreview" class="image-preview"></div>
+
+                <div id="audioPreview" class="audio-preview"></div>
             </div>
 
             <div id="postSuccessMessage" class="post-success-message" role="status" aria-live="polite">
                 <span class="post-success-icon">🌷</span>
-                <span>ขอบคุณที่ส่งต่อความคิดน้า</span>
+                <span>ขอบคุณที่ร่วมแบ่งปันความสบายใจน้า</span>
             </div>
 
             <!-- Filter Buttons -->
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
-                <button class="filter-btn" data-filter="following">กำลังติดตาม</button>
-                <button class="filter-btn" data-filter="liked">ที่ชอบ</button>
-                <button class="filter-btn" data-filter="saved">🔖 บันทึกไว้</button>
+            <div class="filter-buttons" role="tablist">
+                <button type="button" class="filter-btn active" data-filter="all">ทั้งหมด</button>
+                <button type="button" class="filter-btn" data-filter="following">กำลังติดตาม</button>
+                <button type="button" class="filter-btn" data-filter="liked">ที่ชอบ ❤️</button>
+                <button type="button" class="filter-btn" data-filter="saved">🔖 บันทึกไว้</button>
             </div>
 
             <!-- Posts Feed -->
@@ -100,16 +131,16 @@
 
             <!-- No posts message -->
             <div id="noPostsMessage" class="no-posts-message" style="display: none;">
-                <p>ยังไม่มีโพสต์ 📭</p>
-                <p class="text-small">เป็นคนแรกที่สร้างโพสต์!</p>
+                <p>ยังไม่มีโพสต์ในหมวดหมู่นี้ 📭</p>
+                <p class="text-small">แบ่งปันเรื่องราวดีๆ เป็นคนแรกได้เลยครับ!</p>
             </div>
         </main>
     </div>
 
     <!-- Camera Modal -->
-    <div id="cameraModal" class="modal camera-modal">
+    <div id="cameraModal" class="modal camera-modal" role="dialog" aria-modal="true" aria-label="กล้องถ่ายรูป">
         <div class="modal-content camera-modal-content">
-            <button type="button" id="closeCameraBtn" class="modal-close">&times;</button>
+            <button type="button" id="closeCameraBtn" class="modal-close" aria-label="ปิดกล้อง">&times;</button>
             <h3>📸 ถ่ายรูปสำหรับโพสต์</h3>
             <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
             <p id="cameraMessage" class="camera-message">กำลังเตรียมกล้อง...</p>
@@ -121,21 +152,65 @@
     </div>
 
     <!-- Comment Modal -->
-    <div id="commentModal" class="modal">
+    <div id="commentModal" class="modal" role="dialog" aria-modal="true" aria-label="แสดงความคิดเห็น">
         <div class="modal-content">
-            <button class="modal-close">&times;</button>
+            <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
             <div id="modalPostDetail" class="post-detail"></div>
             <div class="comment-section">
-                <textarea id="commentInput" placeholder="เขียนความเห็น..."></textarea>
-                <button id="submitCommentBtn" class="btn-primary">ส่งความเห็น</button>
+                <textarea id="commentInput" placeholder="เขียนข้อความแสดงความคิดเห็นอย่างสร้างสรรค์และสุภาพ..."></textarea>
+                <button type="button" id="submitCommentBtn" class="btn-primary">ส่งความเห็น 💬</button>
             </div>
             <div id="commentsList" class="comments-list"></div>
         </div>
     </div>
 
-    <script src="../js/storage.js"></script>
-    <script src="../js/dashboard.js"></script>
-    <script src="../js/profile-preview.js"></script>
+    <!-- Edit Post Modal -->
+    <div id="editPostModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editPostModalTitle">
+        <div class="modal-content edit-post-modal-content">
+            <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
+            <h3 id="editPostModalTitle">✏️ แก้ไขโพสต์พักใจ</h3>
+            <div id="editPostPreview" class="edit-post-preview-box" style="display: none;"></div>
+            <div class="form-group" style="margin-bottom: 8px;">
+                <label for="editPostCaption">ข้อความโพสต์</label>
+                <textarea id="editPostCaption" class="edit-post-textarea" placeholder="เขียนข้อความหรือความรู้สึกที่ต้องการแบ่งปัน..."></textarea>
+            </div>
+            <div class="edit-modal-actions">
+                <button type="button" id="cancelEditBtn" class="btn-ghost">ยกเลิก</button>
+                <button type="button" id="saveEditPostBtn" class="btn-primary" style="width: auto; padding: 10px 22px;">บันทึกการแก้ไข 🍃</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Post Confirmation Modal -->
+    <div id="deletePostModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal-content delete-post-modal-content">
+            <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
+            <div class="delete-icon-badge">🗑️</div>
+            <h3 id="deleteModalTitle">ต้องการลบโพสต์นี้หรือไม่?</h3>
+            <p class="delete-post-desc">โพสต์และความคิดเห็นที่เกี่ยวข้องจะถูกลบออกจากพื้นที่พักใจ และไม่สามารถกู้คืนได้</p>
+            <div id="deletePostSnippet" class="delete-post-snippet"></div>
+            <div class="delete-modal-actions">
+                <button type="button" id="cancelDeleteBtn" class="btn-ghost">เก็บโพสต์ไว้</button>
+                <button type="button" id="confirmDeleteBtn" class="btn-danger">ลบโพสต์ทันที 🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Post to Friend Modal -->
+    <div id="sendPostModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="sendPostTitle">
+        <div class="modal-content send-post-modal-content">
+            <button type="button" class="modal-close" aria-label="ปิดหน้าต่าง">&times;</button>
+            <h3 id="sendPostTitle">💌 ส่งต่อโพสต์ให้เพื่อน</h3>
+            <div id="sendFriendList" class="send-friend-list"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="pakjai-toast-container" aria-live="polite"></div>
+
+    <script src="/js/storage.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/profile-preview.js"></script>
 </body>
 
 </html>

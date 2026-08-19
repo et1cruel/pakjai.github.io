@@ -9,24 +9,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!currentUser) return;
     loadRecentSearches();
     setupEventListeners();
-    loadTrendingData();
+    await loadTrendingData();
+    checkQueryParam();
 });
 
 // Check authentication
 async function checkAuth() {
     currentUser = await Storage.getServerSession().catch(() => Storage.getCurrentUser());
-    if (!currentUser) {
-        window.location.href = '/index.html';
+    if (!currentUser || !currentUser.username) {
+        window.location.href = '/pakjai/index.html';
         return;
+    }
+}
+
+// Auto search from URL (?q=...)
+function checkQueryParam() {
+    const q = new URLSearchParams(window.location.search).get('q');
+    if (q) {
+        document.getElementById('searchInput').value = q;
+        performSearch();
     }
 }
 
 // Setup event listeners
 function setupEventListeners() {
-    document.getElementById('searchInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            performSearch();
-        }
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') performSearch();
     });
 
     document.getElementById('searchBtn').addEventListener('click', performSearch);
@@ -44,37 +52,36 @@ function setupEventListeners() {
     });
 
     // Modal close
-    document.querySelector('.modal-close').addEventListener('click', () => {
-        document.getElementById('userModal').classList.remove('active');
+    document.querySelectorAll('.modal-close').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('userModal').classList.remove('active');
+        });
     });
 
-    document.getElementById('userModal').addEventListener('click', (e) => {
-        if (e.target.id === 'userModal') {
-            document.getElementById('userModal').classList.remove('active');
-        }
+    const userModal = document.getElementById('userModal');
+    userModal.addEventListener('click', (e) => {
+        if (e.target === userModal) userModal.classList.remove('active');
     });
 
     // Logout
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        Storage.logout();
-        window.location.href = '/index.html';
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await Storage.logout();
+        window.location.href = '/pakjai/index.html';
     });
 }
 
 // Perform search
 function performSearch() {
     const searchTerm = document.getElementById('searchInput').value.trim();
-
     if (!searchTerm) {
+        document.getElementById('recentSearchesContainer').classList.add('active');
+        document.getElementById('resultsContainer').classList.remove('active');
         return;
     }
 
     currentSearchTerm = searchTerm;
-
-    // Add to recent searches
     addToRecentSearches(searchTerm);
 
-    // Show results
     document.getElementById('recentSearchesContainer').classList.remove('active');
     document.getElementById('resultsContainer').classList.add('active');
 
@@ -82,106 +89,96 @@ function performSearch() {
 }
 
 // Display search results
-function displayResults() {
-    const results = searchItems(currentSearchTerm);
+async function displayResults() {
+    const results = await searchItems(currentSearchTerm);
 
-    // Users
-    displayUserResults(results.users);
+    const showUsers = currentFilter === 'all' || currentFilter === 'users';
+    const showPosts = currentFilter === 'all' || currentFilter === 'posts';
+    const showTags = currentFilter === 'all' || currentFilter === 'tags';
 
-    // Posts
-    displayPostResults(results.posts);
+    const usersMatch = showUsers ? results.users : [];
+    const postsMatch = showPosts ? results.posts : [];
+    const tagsMatch = showTags ? results.tags : [];
 
-    // Tags
-    displayTagResults(results.tags);
+    await displayUserResults(usersMatch);
+    displayPostResults(postsMatch);
+    await displayTagResults(tagsMatch);
 
-    if (results.users.length === 0 && results.posts.length === 0 && results.tags.length === 0) {
-        document.getElementById('noResults').style.display = 'block';
-        document.getElementById('usersResults').style.display = 'none';
-        document.getElementById('postsResults').style.display = 'none';
-        document.getElementById('tagsResults').style.display = 'none';
-    } else {
-        document.getElementById('noResults').style.display = 'none';
-
-        if (results.users.length > 0) {
-            document.getElementById('usersResults').style.display = 'block';
-        } else {
-            document.getElementById('usersResults').style.display = 'none';
-        }
-
-        if (results.posts.length > 0) {
-            document.getElementById('postsResults').style.display = 'block';
-        } else {
-            document.getElementById('postsResults').style.display = 'none';
-        }
-
-        if (results.tags.length > 0) {
-            document.getElementById('tagsResults').style.display = 'block';
-        } else {
-            document.getElementById('tagsResults').style.display = 'none';
-        }
-    }
+    const hasAnyResults = usersMatch.length > 0 || postsMatch.length > 0 || tagsMatch.length > 0;
+    document.getElementById('noResults').style.display = hasAnyResults ? 'none' : 'block';
+    document.getElementById('usersResults').style.display = usersMatch.length > 0 ? 'block' : 'none';
+    document.getElementById('postsResults').style.display = postsMatch.length > 0 ? 'block' : 'none';
+    document.getElementById('tagsResults').style.display = tagsMatch.length > 0 ? 'block' : 'none';
 }
 
 // Search items
-function searchItems(term) {
-    const lowerTerm = term.toLowerCase();
+async function searchItems(term) {
+    const lowerTerm = term.toLowerCase().replace(/^#/, '');
     const users = [];
     const posts = [];
     const tags = new Set();
 
     // Search users
-    const allUsers = JSON.parse(localStorage.getItem('users')) || [];
+    const allUsers = await Storage.getUsersFromServer().catch(() => Storage.getUsers());
     allUsers.forEach(user => {
-        if (user.username.toLowerCase().includes(lowerTerm) ||
-            user.bio?.toLowerCase().includes(lowerTerm) ||
-            user.email.toLowerCase().includes(lowerTerm)) {
+        if (
+            user.username.toLowerCase().includes(lowerTerm) ||
+            (user.nickname && user.nickname.toLowerCase().includes(lowerTerm)) ||
+            (user.bio && user.bio.toLowerCase().includes(lowerTerm))
+        ) {
             users.push(user);
         }
     });
 
     // Search posts & tags
-    const allPosts = JSON.parse(localStorage.getItem('posts')) || [];
+    const allPosts = (await Storage.getPosts()).filter(post =>
+        post.visibility !== 'private' ||
+        post.username === currentUser.username ||
+        post.userId === currentUser.id
+    );
     allPosts.forEach(post => {
-        if (post.caption.toLowerCase().includes(lowerTerm)) {
+        const captionLower = (post.caption || '').toLowerCase();
+        if (captionLower.includes(lowerTerm)) {
             posts.push(post);
+        }
 
-            // Extract hashtags
-            const hashtagMatches = post.caption.match(/#[ก-๙a-zA-Z0-9]+/g);
-            if (hashtagMatches) {
-                hashtagMatches.forEach(tag => tags.add(tag));
-            }
+        const hashtagMatches = (post.caption || '').match(/#[ก-๙a-zA-Z0-9_]+/g);
+        if (hashtagMatches) {
+            hashtagMatches.forEach(tag => {
+                if (tag.toLowerCase().includes(lowerTerm)) {
+                    tags.add(tag);
+                }
+            });
         }
     });
 
-    // Add hashtag results
-    const tagsArray = Array.from(tags).filter(tag =>
-        tag.toLowerCase().includes(lowerTerm)
-    );
-
-    return { users, posts, tags: tagsArray };
+    return { users, posts, tags: Array.from(tags) };
 }
 
 // Display user results
-function displayUserResults(users) {
+async function displayUserResults(users) {
     const container = document.getElementById('usersList');
     container.innerHTML = '';
 
+    const currentUserData = currentUser;
+
+    const allPosts = await Storage.getPosts();
     users.slice(0, 9).forEach(user => {
         const card = document.createElement('div');
         card.className = 'user-result-card';
 
-        const isFollowing = currentUser.id &&
-            JSON.parse(localStorage.getItem('users')).find(u => u.id === currentUser.id)?.following.includes(user.id);
+        const isFollowing = currentUserData.following?.includes(user.id) || currentUserData.following?.includes(user.username);
+        const userPostCount = allPosts.filter(p => p.username === user.username || p.userId === user.id).length;
 
         card.innerHTML = `
-            <img class="user-result-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar" data-profile-username="${user.username}">
-            <div class="user-result-name" data-profile-username="${user.username}">${user.nickname || user.username}</div>
-            <div class="user-result-handle">@${user.username}</div>
-            <div class="user-result-bio">${user.bio || 'ไม่มีประวัติส่วนตัว'}</div>
+            <img class="user-result-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar" data-profile-username="${escapeHtml(user.username)}">
+            <div class="user-result-name" data-profile-username="${escapeHtml(user.username)}" style="color: ${user.nicknameColor || '#2e8b68'}">${escapeHtml(user.nickname || user.username)}</div>
+            <div class="user-result-handle">@${escapeHtml(user.username)}</div>
+            <div class="user-result-bio">${escapeHtml(user.bio || 'ไม่มีประวัติส่วนตัว')}</div>
 
             <div class="user-result-stats">
                 <div class="user-stat">
-                    <div class="user-stat-num">${user.posts?.length || 0}</div>
+                    <div class="user-stat-num">${userPostCount}</div>
                     <div class="user-stat-label">โพสต์</div>
                 </div>
                 <div class="user-stat">
@@ -194,14 +191,16 @@ function displayUserResults(users) {
                 </div>
             </div>
 
-            <button class="user-result-btn ${isFollowing ? 'following' : ''}" onclick="toggleFollowUser('${user.id}')">
-                ${isFollowing ? '✓ กำลังติดตาม' : '+ ติดตาม'}
-            </button>
+            ${user.username !== currentUser.username ? `
+                <button type="button" class="user-result-btn ${isFollowing ? 'following' : ''}" onclick="toggleFollowUser('${user.id || user.username}')">
+                    ${isFollowing ? '✓ กำลังติดตาม' : '+ ติดตาม'}
+                </button>
+            ` : ''}
         `;
 
         card.addEventListener('click', (e) => {
             if (!e.target.classList.contains('user-result-btn')) {
-                showUserModal(user);
+                window.location.href = `/pakjai/profile.html?username=${encodeURIComponent(user.username)}`;
             }
         });
 
@@ -214,8 +213,8 @@ function displayPostResults(posts) {
     const container = document.getElementById('postsList');
     container.innerHTML = '';
 
-    posts.slice(0, 6).forEach(post => {
-        const postUser = Storage.getUser(post.username);
+    posts.slice(0, 8).forEach(post => {
+        const postUser = post;
         const card = document.createElement('div');
         card.className = 'post-result-card';
 
@@ -223,12 +222,12 @@ function displayPostResults(posts) {
             <div class="post-result-header">
                 <img class="post-result-avatar" src="${postUser?.profileImage || generateAvatar(post.username)}" alt="Avatar">
                 <div class="post-result-user-info">
-                    <div class="post-result-username" data-profile-username="${post.username}">${postUser?.nickname || post.username}</div>
+                    <div class="post-result-username" style="color: ${postUser?.nicknameColor || '#2e8b68'}">${escapeHtml(postUser?.nickname || post.username)}</div>
                     <div class="post-result-time">${formatTime(post.timestamp)}</div>
                 </div>
             </div>
 
-            ${post.image ? `<img class="post-result-image" src="${post.image}" alt="Post">` : ''}
+            ${post.image ? `<img class="post-result-image" src="${post.image}" alt="Post Image">` : ''}
 
             <div class="post-result-content">
                 <div class="post-result-caption">${escapeHtml(post.caption)}</div>
@@ -239,25 +238,34 @@ function displayPostResults(posts) {
             </div>
         `;
 
+        card.addEventListener('click', () => {
+            window.location.href = `/pakjai/dashboard.html`;
+        });
+
         container.appendChild(card);
     });
 }
 
 // Display tag results
-function displayTagResults(tags) {
+async function displayTagResults(tags) {
     const container = document.getElementById('tagsList');
     container.innerHTML = '';
 
+    const posts = (await Storage.getPosts()).filter(post =>
+        post.visibility !== 'private' ||
+        post.username === currentUser.username ||
+        post.userId === currentUser.id
+    );
+
     tags.slice(0, 12).forEach(tag => {
-        const posts = JSON.parse(localStorage.getItem('posts')) || [];
         const tagPostCount = posts.filter(p =>
-            p.caption.toLowerCase().includes(tag.toLowerCase())
+            (p.caption || '').toLowerCase().includes(tag.toLowerCase())
         ).length;
 
         const card = document.createElement('div');
         card.className = 'tag-card';
         card.innerHTML = `
-            <div class="tag-name">${tag}</div>
+            <div class="tag-name">${escapeHtml(tag)}</div>
             <div class="tag-count">${tagPostCount} โพสต์</div>
         `;
 
@@ -270,60 +278,19 @@ function displayTagResults(tags) {
     });
 }
 
-// Show user modal
-function showUserModal(user) {
-    const modal = document.getElementById('userModal');
-    const body = document.getElementById('userModalBody');
-
-    const currentUserData = Storage.getUser(currentUser.username);
-    const isFollowing = currentUserData.following.includes(user.id);
-
-    body.innerHTML = `
-        <img class="user-modal-avatar" src="${user.profileImage || generateAvatar(user.username)}" alt="Avatar">
-        <div class="user-modal-name">${user.nickname || user.username}</div>
-        <div class="user-modal-handle">@${user.username}</div>
-        <div class="user-modal-bio">${user.bio || 'ไม่มีประวัติส่วนตัว'}</div>
-
-        <div class="user-modal-stats">
-            <div class="user-modal-stat">
-                <div class="user-modal-stat-num">${user.posts?.length || 0}</div>
-                <div class="user-modal-stat-label">โพสต์</div>
-            </div>
-            <div class="user-modal-stat">
-                <div class="user-modal-stat-num">${user.followers?.length || 0}</div>
-                <div class="user-modal-stat-label">ผู้ติดตาม</div>
-            </div>
-            <div class="user-modal-stat">
-                <div class="user-modal-stat-num">${user.following?.length || 0}</div>
-                <div class="user-modal-stat-label">ติดตาม</div>
-            </div>
-        </div>
-
-        <button class="user-modal-btn ${isFollowing ? 'following' : ''}" onclick="toggleFollowUser('${user.id}')">
-            ${isFollowing ? '✓ กำลังติดตาม' : '+ ติดตาม'}
-        </button>
-    `;
-
-    modal.classList.add('active');
-}
-
 // Toggle follow user
-function toggleFollowUser(userId) {
-    const currentUserData = Storage.getUser(currentUser.username);
-    const index = currentUserData.following.indexOf(userId);
-
+async function toggleFollowUser(userId) {
+    const currentUserData = currentUser;
+    const isFollowing = currentUserData.following?.includes(userId) || currentUserData.following?.includes(currentUserData.username);
+    const index = (currentUserData.following || []).indexOf(userId);
     if (index > -1) {
         currentUserData.following.splice(index, 1);
     } else {
         currentUserData.following.push(userId);
     }
 
-    // Update storage
-    let users = JSON.parse(localStorage.getItem('users')) || [];
-    users = users.map(u => u.id === currentUserData.id ? currentUserData : u);
-    localStorage.setItem('users', JSON.stringify(users));
+    await Storage.follow(userId, !isFollowing);
 
-    // Refresh display
     if (currentSearchTerm) {
         displayResults();
     }
@@ -331,10 +298,10 @@ function toggleFollowUser(userId) {
 
 // Recent searches
 function addToRecentSearches(term) {
-    recentSearches = recentSearches.filter(s => s !== term);
+    recentSearches = recentSearches.filter(s => s.toLowerCase() !== term.toLowerCase());
     recentSearches.unshift(term);
 
-    if (recentSearches.length > 10) {
+    if (recentSearches.length > 8) {
         recentSearches.pop();
     }
 
@@ -348,7 +315,7 @@ function loadRecentSearches() {
     container.innerHTML = '';
 
     if (recentSearches.length === 0) {
-        container.innerHTML = '<p style="color: #999; text-align: center;">ยังไม่มีประวัติการค้นหา</p>';
+        container.innerHTML = '<p style="color: var(--text-light); font-size: 0.88rem; text-align: center; padding: 12px;">ยังไม่มีประวัติการค้นหา</p>';
         return;
     }
 
@@ -357,14 +324,17 @@ function loadRecentSearches() {
         item.className = 'search-item';
         item.innerHTML = `
             <span class="search-item-text">${escapeHtml(search)}</span>
-            <button class="remove-search" onclick="removeRecentSearch('${search}')">✕</button>
+            <button type="button" class="remove-search" title="ลบ">✕</button>
         `;
 
-        item.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('remove-search')) {
-                document.getElementById('searchInput').value = search;
-                performSearch();
-            }
+        item.querySelector('.remove-search').addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeRecentSearch(search);
+        });
+
+        item.addEventListener('click', () => {
+            document.getElementById('searchInput').value = search;
+            performSearch();
         });
 
         container.appendChild(item);
@@ -378,12 +348,16 @@ function removeRecentSearch(term) {
 }
 
 // Load trending data
-function loadTrendingData() {
-    const allPosts = JSON.parse(localStorage.getItem('posts')) || [];
+async function loadTrendingData() {
+    const allPosts = (await Storage.getPosts()).filter(post =>
+        post.visibility !== 'private' ||
+        post.username === currentUser.username ||
+        post.userId === currentUser.id
+    );
     const tagMap = {};
 
     allPosts.forEach(post => {
-        const matches = post.caption.match(/#[ก-๙a-zA-Z0-9]+/g);
+        const matches = (post.caption || '').match(/#[ก-๙a-zA-Z0-9_]+/g);
         if (matches) {
             matches.forEach(tag => {
                 tagMap[tag] = (tagMap[tag] || 0) + 1;
@@ -393,13 +367,13 @@ function loadTrendingData() {
 
     const trending = Object.entries(tagMap)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
+        .slice(0, 6);
 
     const container = document.getElementById('trendingList');
     container.innerHTML = '';
 
     if (trending.length === 0) {
-        container.innerHTML = '<p style="color: #999; text-align: center;">ยังไม่มีแฮชแท็ก</p>';
+        container.innerHTML = '<p style="color: var(--text-light); font-size: 0.88rem; text-align: center; padding: 12px;">ยังไม่มีแฮชแท็ก</p>';
         return;
     }
 
@@ -407,7 +381,7 @@ function loadTrendingData() {
         const item = document.createElement('div');
         item.className = 'trending-item';
         item.innerHTML = `
-            <span class="trending-tag">${tag}</span>
+            <span class="trending-tag">${escapeHtml(tag)}</span>
             <span class="trending-count">${count} โพสต์</span>
         `;
 
@@ -420,33 +394,28 @@ function loadTrendingData() {
     });
 }
 
-// Utilities
+function generateAvatar(username) {
+    if (!username) username = 'User';
+    const colors = ['#2e8b68', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#6366f1'];
+    const color = colors[username.charCodeAt(0) % colors.length];
+    const initial = username[0].toUpperCase();
+    const svg = `<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+        <rect width="80" height="80" fill="${color}" rx="40"/>
+        <text x="40" y="40" font-size="34" font-family="sans-serif" font-weight="bold" fill="white"
+              text-anchor="middle" dominant-baseline="central">${initial}</text>
+    </svg>`;
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
 function formatTime(isoString) {
+    if (!isoString) return '';
     const date = new Date(isoString);
-    const now = new Date();
-    const diff = Math.floor((now - date) / 1000);
-
-    if (diff < 60) return 'เมื่อสักครู่';
-    if (diff < 3600) return Math.floor(diff / 60) + ' นาทีที่แล้ว';
-    if (diff < 86400) return Math.floor(diff / 3600) + ' ชั่วโมงที่แล้ว';
-    if (diff < 604800) return Math.floor(diff / 86400) + ' วันที่แล้ว';
-
-    return date.toLocaleDateString('th-TH');
+    return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
 }
 
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-function generateAvatar(username) {
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
-    const color = colors[username.charCodeAt(0) % colors.length];
-    const svg = `<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-        <rect width="80" height="80" fill="${color}"/>
-        <text x="40" y="40" font-size="36" font-weight="bold" fill="white"
-              text-anchor="middle" dominant-baseline="central">${username[0].toUpperCase()}</text>
-    </svg>`;
-    return 'data:image/svg+xml;base64,' + btoa(svg);
 }

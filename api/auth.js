@@ -1,163 +1,61 @@
-const mongoose = require('mongoose');
-const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
 
-const SESSION_DAYS = 30;
-let connectionPromise;
-
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  passwordHash: { type: String, required: true },
-  bio: { type: String, default: '' },
-  profileImage: { type: String, default: '' },
-  followers: { type: [String], default: [] },
-  following: { type: [String], default: [] },
-  posts: { type: [mongoose.Schema.Types.Mixed], default: [] }
-}, { timestamps: true });
-
-const sessionSchema = new mongoose.Schema({
-  tokenHash: { type: String, required: true, unique: true, index: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'PakjaiUser' },
-  expiresAt: { type: Date, required: true, index: true }
-}, { timestamps: true });
-sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-const User = mongoose.models.PakjaiUser || mongoose.model('PakjaiUser', userSchema);
-const Session = mongoose.models.PakjaiSession || mongoose.model('PakjaiSession', sessionSchema);
-
-function connectDatabase() {
-  if (!process.env.MONGO_URI) throw new Error('MONGO_URI is not configured in Vercel');
-  connectionPromise ??= mongoose.connect(process.env.MONGO_URI, { bufferCommands: false });
-  return connectionPromise;
+function supabase() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Supabase server environment is not configured');
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 }
-
-function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
-  return `${salt}:${hash}`;
-}
-
-function verifyPassword(password, stored) {
-  const [salt, hash] = String(stored).split(':');
-  if (!salt || !hash) return false;
-  const candidate = crypto.scryptSync(password, salt, 64);
-  const expected = Buffer.from(hash, 'hex');
-  return candidate.length === expected.length && crypto.timingSafeEqual(candidate, expected);
-}
-
-function publicUser(user) {
-  return {
-    id: user.id, username: user.username, email: user.email,
-    bio: user.bio || '', profileImage: user.profileImage || '',
-    followers: user.followers || [], following: user.following || [], posts: user.posts || []
-  };
-}
-
-function createSessionToken() {
-  return crypto.randomBytes(32).toString('hex');
-}
-
-function hashToken(token) {
-  return crypto.createHash('sha256').update(token).digest('hex');
-}
-
-function readCookies(req) {
-  const cookies = {};
-  for (const value of (req.headers.cookie || '').split(';').filter(Boolean)) {
-    const index = value.indexOf('=');
-    if (index < 0) continue;
-    try {
-      cookies[value.slice(0, index).trim()] = decodeURIComponent(value.slice(index + 1).trim());
-    } catch {
-      // Ignore malformed cookie values and continue parsing valid cookies.
-    }
-  }
-  return cookies;
-}
-
-function setSessionCookie(res, token) {
-  const maxAge = SESSION_DAYS * 24 * 60 * 60;
-  res.setHeader('Set-Cookie', `pakjai_session=${encodeURIComponent(token)}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`);
-}
-
-function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', 'pakjai_session=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax');
-}
-
-async function createSession(user, res) {
-  const token = createSessionToken();
-  await Session.create({ tokenHash: hashToken(token), userId: user._id, expiresAt: new Date(Date.now() + SESSION_DAYS * 86400000) });
-  setSessionCookie(res, token);
-}
-
-async function getSessionUser(req) {
-  const token = readCookies(req).pakjai_session;
+function cookies(req) { return Object.fromEntries((req.headers.cookie || '').split(';').filter(Boolean).map(x => x.trim().split('='))); }
+async function userFromRequest(req) {
+  const token = cookies(req).pakjai_access_token;
   if (!token) return null;
-  const session = await Session.findOne({ tokenHash: hashToken(token), expiresAt: { $gt: new Date() } });
-  if (!session) return null;
-  return User.findById(session.userId);
+  const { data: { user }, error } = await supabase().auth.getUser(token);
+  return error ? null : user;
 }
-
+function publicProfile(profile) { return profile ? { id: profile.id, username: profile.username, email: profile.email, nickname: profile.nickname || profile.username, nicknameColor: profile.nickname_color || '#34a887', bio: profile.bio || '', profileImage: profile.avatar_path || '', coverImage: profile.cover_path || '', pet: profile.pet || '', tree: profile.tree || '', zodiac: profile.zodiac || '' } : null; }
 module.exports = async function handler(req, res) {
   try {
-    await connectDatabase();
-
+    const client = supabase();
     if (req.method === 'GET') {
-      const user = await getSessionUser(req);
-      return res.json({ success: Boolean(user), user: user ? publicUser(user) : null });
+      const user = await userFromRequest(req);
+      if (!user) return res.status(200).json({ success: false, user: null });
+      const { data: profile } = await client.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      return res.status(200).json({ success: true, user: publicProfile(profile) });
     }
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
-
     const { action, username, email, password } = req.body || {};
-    if (action === 'logout') {
-      const token = readCookies(req).pakjai_session;
-      if (token) await Session.deleteOne({ tokenHash: hashToken(token) });
-      clearSessionCookie(res);
-      return res.json({ success: true });
-    }
-    if (!password || password.length < 6) return res.status(400).json({ success: false, error: 'รหัสผ่านต้องมากกว่า 6 ตัวอักษร' });
-
+    if (action === 'logout') { res.setHeader('Set-Cookie', 'pakjai_access_token=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax'); return res.json({ success: true }); }
+    if (!password || password.length < 6) return res.status(400).json({ success: false, error: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' });
     if (action === 'signup') {
-      if (!username || username.trim().length < 3 || !email) return res.status(400).json({ success: false, error: 'ข้อมูลสมัครสมาชิกไม่ครบถ้วน' });
-      const normalizedUsername = username.trim();
-      const normalizedEmail = email.toLowerCase().trim();
-      const existingUsername = await User.exists({ username: normalizedUsername });
-      const existingEmail = await User.exists({ email: normalizedEmail });
-      if (existingUsername || existingEmail) return res.status(409).json({ success: false, error: 'ชื่อผู้ใช้หรือ Email นี้มีอยู่แล้ว' });
-      let user;
-      try {
-        user = await User.create({ username: normalizedUsername, email: normalizedEmail, passwordHash: hashPassword(password) });
-      } catch (error) {
-        if (error?.code === 11000) return res.status(409).json({ success: false, error: 'ชื่อผู้ใช้หรือ Email นี้มีอยู่แล้ว' });
-        throw error;
+      const normalizedUsername = String(username || '').trim();
+      const normalizedEmail = String(email || '').trim().toLowerCase();
+      if (normalizedUsername.length < 3 || !normalizedEmail) return res.status(400).json({ success: false, error: 'กรุณากรอกข้อมูลสมัครสมาชิกให้ครบถ้วน' });
+      const { data, error } = await client.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: { data: { username: normalizedUsername } }
+      });
+      if (error) return res.status(400).json({ success: false, error: error.message });
+      if (!data.user) return res.status(400).json({ success: false, error: 'ไม่สามารถสร้างบัญชีได้' });
+      const { data: profile, error: profileError } = await client.from('profiles').upsert({ id: data.user.id, username: normalizedUsername, email: normalizedEmail, nickname: normalizedUsername }).select().single();
+      if (profileError) return res.status(500).json({ success: false, error: profileError.message });
+      if (data.session?.access_token) {
+        res.setHeader('Set-Cookie', `pakjai_access_token=${encodeURIComponent(data.session.access_token)}; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax`);
+        return res.status(201).json({ success: true, user: publicProfile(profile), emailConfirmationRequired: false });
       }
-      try {
-        await createSession(user, res);
-      } catch (sessionError) {
-        console.error('Session table error:', sessionError);
-        try {
-          await User.deleteOne({ _id: user._id });
-        } catch (rollbackError) {
-          console.error('User rollback error:', rollbackError);
-        }
-        return res.status(500).json({ success: false, error: 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' });
-      }
-      return res.status(201).json({ success: true, user: publicUser(user) });
+      return res.status(201).json({ success: true, user: null, emailConfirmationRequired: true, message: 'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ' });
     }
-
     if (action === 'login') {
       const identity = String(username || '').trim();
-      const user = await User.findOne({ $or: [{ username: identity }, { email: identity.toLowerCase() }] });
-      if (!user || !verifyPassword(password, user.passwordHash)) return res.status(401).json({ success: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
-      await createSession(user, res);
-      return res.json({ success: true, user: publicUser(user) });
+      const { data: lookup } = await client.from('profiles').select('email').or(`username.eq.${identity},email.eq.${identity.toLowerCase()}`).maybeSingle();
+      const { data, error } = await client.auth.signInWithPassword({ email: lookup?.email || identity, password });
+      if (error || !data.user) return res.status(401).json({ success: false, error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+      const { data: profile } = await client.from('profiles').select('*').eq('id', data.user.id).single();
+      res.setHeader('Set-Cookie', `pakjai_access_token=${encodeURIComponent(data.session.access_token)}; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax`);
+      return res.json({ success: true, user: publicProfile(profile) });
     }
-    return res.status(400).json({ success: false, error: 'Unknown action' });
-  } catch (error) {
-    console.error('MongoDB Auth API error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'MongoDB ไม่สามารถดำเนินการได้'
-    });
-  }
+    return res.status(400).json({ success: false, error: 'คำสั่งไม่ถูกต้อง' });
+  } catch (error) { console.error(error); return res.status(500).json({ success: false, error: 'เกิดข้อผิดพลาดในการเชื่อมต่อ Supabase' }); }
 };
+module.exports.userFromRequest = userFromRequest;
+module.exports.publicProfile = publicProfile;
+module.exports.supabase = supabase;
