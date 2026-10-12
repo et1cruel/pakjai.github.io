@@ -57,7 +57,7 @@ export default function Logo({
         <span className="flex flex-col leading-none text-left">
           <span
             className="font-extrabold tracking-tight text-earth"
-            style={{ fontSize: compact ? 17 : 20, lineHeight: 1 }}
+            style={{ fontSize: compact ? 17 : 20, lineHeight: 1, fontFamily: "'Lora', 'Sarabun', serif" }}
           >
             Pakjai
           </span>

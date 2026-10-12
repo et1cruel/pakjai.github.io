@@ -37,7 +37,7 @@ export default function BottomNav({ page, setPage }: Props) {
               onClick={() => setPage(item.page)}
               className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all duration-200 min-w-0"
               style={{
-                color: active ? '#faf9f5' : '#5a7a6a',
+                color: active ? '#faf9f5' : '#4c685b',
                 backgroundColor: active ? '#2d6a4f' : 'transparent',
               }}
             >

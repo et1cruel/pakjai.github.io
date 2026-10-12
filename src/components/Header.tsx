@@ -99,7 +99,7 @@ export default function Header({
           >
             <Bell size={18} />
             {unread > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: "#c97d5a", color: "#faf9f5" }}>
+              <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: "#9e5634", color: "#faf9f5" }}>
                 {unread > 9 ? "9+" : unread}
               </span>
             )}

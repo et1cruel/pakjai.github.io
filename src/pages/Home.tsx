@@ -51,7 +51,7 @@ const articles = [
     hearts: 312,
     large: false,
     catColor: "#fef3e2",
-    catText: "#b7730a",
+    catText: "#7e5300",
   },
   {
     id: 3,
@@ -65,7 +65,7 @@ const articles = [
     hearts: 189,
     large: false,
     catColor: "#fff8e1",
-    catText: "#8a6500",
+    catText: "#7e5300",
   },
   {
     id: 4,

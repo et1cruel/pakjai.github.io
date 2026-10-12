@@ -16,7 +16,7 @@ export function AIFilterBadge({ text }: { text: string }) {
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: "#fef9e7", color: "#8a6500" }}>
+    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: "#fef9e7", color: "#7e5300" }}>
         <TriangleAlert size={12} /> เนื้อหาอ่อนไหว · อ่านเมื่อพร้อม
       </span>
   );

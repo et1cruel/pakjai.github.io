@@ -15,6 +15,10 @@ import {
   Utensils,
   User,
   LogIn,
+  ImagePlus,
+  Smile,
+  PenLine,
+  ShieldCheck,
 } from "lucide-react"
 import type { Page } from "../App"
 import { interests, useStore, type Post } from "../store"
@@ -25,6 +29,8 @@ import { AIFilterIndicator, ModVerdict } from "../components/AIGuard"
 import PostCard, { share } from "../components/PostCard"
 import { CategoryIcon } from "../components/icons"
 import FocusTimer from "../components/FocusTimer"
+import { Onboarding } from "./Auth"
+import { Create } from "./CreatePost"
 import {
   Avatar,
   Button,
@@ -137,16 +143,45 @@ export function SocialFeed({
           เรื่องที่อาจอ่อนไหว {softWarned.length} เรื่องถูกเบลอไว้แล้ว เปิดอ่านได้เมื่อพร้อม
         </p>
       )}
-      <Card className="pj-compose">
-        <Avatar name={state.name} />
-        <Button
-          variant="ghost"
+      <Card className="pj-compose-new">
+        <div className="pj-compose-top">
+          <span className="pj-compose-ava">
+            <Avatar name={state.name} />
+          </span>
+          <span className="pj-compose-who">
+            <strong>{state.name}</strong>
+            <p>@{state.handle}</p>
+          </span>
+          {state.aiFilter && (
+            <span className="pj-compose-ai">
+              <ShieldCheck size={13} />
+              AI ดูแลอยู่
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          className="pj-compose-prompt"
           aria-label="เขียนเรื่องดี ๆ"
           onClick={() => navigate("create")}
         >
           วันนี้มีเรื่องเล็ก ๆ อะไรอยากแบ่งปันไหม?
-        </Button>
-        <Plus size={20} aria-hidden className="text-forest" />
+          <PenLine size={17} aria-hidden />
+        </button>
+        <div className="pj-compose-actions">
+          <button type="button" onClick={() => navigate("create")}>
+            <ImagePlus size={17} style={{ color: "#40916c" }} />
+            รูปภาพ
+          </button>
+          <button type="button" onClick={() => navigate("create")}>
+            <Smile size={17} style={{ color: "#7e5300" }} />
+            ความรู้สึก
+          </button>
+          <button type="button" onClick={() => navigate("create")}>
+            <PenLine size={17} style={{ color: "#9e5634" }} />
+            เขียนเลย
+          </button>
+        </div>
       </Card>
       <div className="pj-chips" role="group" aria-label="กรองตามหมวด">
         {["ทั้งหมด", ...interests].map((m) => (
@@ -228,148 +263,6 @@ export default function Social({
       {page === "wellbeing" && <Wellbeing />}
       {page === "settings" && <Preferences navigate={navigate} />}
       {page === "onboarding" && <Onboarding navigate={navigate} />}
-    </div>
-  )
-}
-function Create({ navigate }: { navigate: Navigate }) {
-  const { state, update, toast } = useStore()
-  const [text, setText] = useState("")
-  const [category, setCategory] = useState(state.interests[0] || "ธรรมชาติ")
-  const [warning, setWarning] = useState(false)
-  const [visibility, setVisibility] = useState(
-    state.privateAccount ? "ผู้ติดตาม" : "สาธารณะ",
-  )
-  const [image, setImage] = useState("")
-  const [loading, setLoading] = useState(false)
-  const verdict =
-    state.aiFilter && text.trim()
-      ? moderateText(text, state.aiSensitivity)
-      : null
-  const blocked = verdict?.action === "block"
-  const needsWarning = verdict?.action === "review" && !warning
-  return (
-    <div className="pj-stack">
-      <Title sub="ไม่ต้องสมบูรณ์แบบ เรื่องเล็ก ๆ ก็มีความหมาย">แบ่งปันเรื่องของคุณ</Title>
-      <Card>
-        <div className="pj-person">
-          <Avatar name={state.name} />
-          <strong>{state.name}</strong>
-        </div>
-        <TextArea
-          label="เรื่องที่อยากแบ่งปัน"
-          value={text}
-          onChange={setText}
-          placeholder="วันนี้ฉันพบความสุขเล็ก ๆ จาก..."
-        />
-        {state.aiFilter && (
-          <ModVerdict text={text} sensitivity={state.aiSensitivity} />
-        )}
-        <Input
-          label="เพิ่มรูปภาพ (ไม่เกิน 2 MB)"
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (!file) return
-            if (file.size > 2 * 1024 * 1024) {
-              toast("เลือกรูปภาพขนาดไม่เกิน 2 MB นะ")
-              return
-            }
-            setLoading(true)
-            const reader = new FileReader()
-            reader.onload = () => {
-              setImage(String(reader.result))
-              setLoading(false)
-            }
-            reader.onerror = () => {
-              toast("อ่านรูปภาพไม่สำเร็จ")
-              setLoading(false)
-            }
-            reader.readAsDataURL(file)
-          }}
-        />
-        {image && (
-          <>
-            <img src={image} alt="ภาพก่อนเผยแพร่" className="pj-upload" />
-            <Button variant="ghost" onClick={() => setImage("")}>
-              นำรูปออก
-            </Button>
-          </>
-        )}
-        <Select
-          label="หมวดหมู่"
-          value={category}
-          onChange={setCategory}
-          options={interests}
-        />
-        <Toggle
-          label="คำเตือนเนื้อหาที่อาจกระทบความรู้สึก"
-          checked={warning}
-          onChange={setWarning}
-        />
-        <Select
-          label="ใครเห็นโพสต์นี้ได้"
-          value={visibility}
-          onChange={setVisibility}
-          options={["สาธารณะ", "ผู้ติดตาม", "เฉพาะฉัน"]}
-        />
-        <p className="pj-caption">
-          {needsWarning
-            ? "AI เห็นว่าเรื่องนี้อาจอ่อนไหว เราเปิดคำเตือนให้อัตโนมัติเมื่อเผยแพร่"
-            : "AI จะตรวจเนื้อหาก่อนเผยแพร่ เรื่องที่เสี่ยงจะถูกพับไว้ ไม่แสดงในฟีดของคนอื่น"}
-        </p>
-        <div className="pj-actions">
-          <Button variant="soft" onClick={() => navigate("community")}>
-            ยกเลิก
-          </Button>
-          <Button
-            disabled={(!text.trim() && !image) || loading || blocked}
-            onClick={async () => {
-              if (blocked) {
-                toast("พักเรื่องนี้ไว้ก่อนนะ ลองเล่าในมุมที่เยียวยากว่าเดิม")
-                return
-              }
-              let imageUrl = image
-              if (isCloud && image.startsWith("data:")) {
-                setLoading(true)
-                try {
-                  const { data } = await supabase().auth.getUser()
-                  imageUrl = await uploadPostImage(image, data.user?.id ?? "anon")
-                } catch {
-                  toast("อัปโหลดรูปไม่สำเร็จ ลองใหม่หรือโพสต์แบบไม่มีรูป")
-                  setLoading(false)
-                  return
-                }
-                setLoading(false)
-              }
-              const post: Post = {
-                id: crypto.randomUUID(),
-                author: state.name,
-                handle: state.handle,
-                text: text.trim(),
-                category,
-                image: imageUrl,
-                warning: warning || verdict?.action === "review",
-                visibility,
-                liked: false,
-                saved: false,
-                reposted: false,
-                likes: 0,
-                comments: [],
-              }
-              update((s) => ({
-                ...s,
-                posts: [post, ...s.posts],
-                mood: "ทั้งหมด",
-              }))
-              toast("แบ่งปันเรื่องของคุณแล้ว")
-              navigate("community")
-            }}
-          >
-            เผยแพร่เรื่องราว
-          </Button>
-        </div>
-      </Card>
     </div>
   )
 }
@@ -1293,173 +1186,6 @@ function Preferences({ navigate }: { navigate: Navigate }) {
           </div>
         </Modal>
       )}
-    </div>
-  )
-}
-function Onboarding({ navigate }: { navigate: Navigate }) {
-  const { state, update, toast } = useStore()
-  const [step, setStep] = useState(0)
-  const [login, setLogin] = useState(false)
-  const [name, setName] = useState(state.joined ? state.name : "")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [selected, setSelected] = useState(state.interests)
-  const [mood, setMood] = useState("ธรรมชาติ")
-  const [busy, setBusy] = useState(false)
-  const [authError, setAuthError] = useState("")
-  const submitAuth = async () => {
-    if (
-      (!login && !name.trim()) ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-      password.length < 6
-    )
-      return
-    if (!isCloud) {
-      setPassword("")
-      if (login) {
-        update((s) => ({ ...s, joined: true }))
-        toast("เข้าสู่บัญชีสาธิตบนอุปกรณ์นี้แล้ว")
-        navigate("community")
-      } else setStep(1)
-      return
-    }
-    setBusy(true)
-    setAuthError("")
-    try {
-      if (login) {
-        await services.auth.signIn?.(email, password)
-        update((s) => ({ ...s, joined: true }))
-        toast("ยินดีต้อนรับกลับ")
-        navigate("community")
-      } else {
-        await services.auth.signUp?.(email, password, name.trim())
-        setStep(1)
-      }
-    } catch (e) {
-      setAuthError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง")
-    } finally {
-      setBusy(false)
-      setPassword("")
-    }
-  }
-  return (
-    <div className="pj-stack">
-      <Card className="pj-welcome">
-        <Leaf size={36} />
-        <Title sub="พื้นที่เล็ก ๆ สำหรับชีวิตที่ไม่ต้องรีบ">ยินดีต้อนรับสู่พักใจ</Title>
-        <p>ธรรมชาติ ความรู้ และผู้คนที่พร้อมเติบโตไปด้วยกัน</p>
-      </Card>
-      <Card>
-        <p className="pj-overline">ก้าวที่ {step + 1} จาก 3</p>
-        {step === 0 ? (
-          <>
-            <Title>{login ? "กลับมาพักใจ" : "เริ่มต้นในจังหวะของคุณ"}</Title>
-            <p className="pj-caption">
-              {isCloud
-                ? "บัญชีจริงของชุมชนพักใจ เก็บอย่างปลอดภัยบน Supabase"
-                : "บัญชีสาธิตในเบราว์เซอร์ ไม่ใช่การสมัครหรือเข้าสู่ระบบจริง กรุณาอย่าใช้รหัสผ่านจริง"}
-            </p>
-            {!login && (
-              <Input
-                label="ชื่อที่อยากให้เรียก"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            )}
-            <Input
-              label="อีเมลตัวอย่าง"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="palin@example.com"
-            />
-            <Input
-              label="รหัสผ่านตัวอย่าง (อย่างน้อย 6 ตัว)"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <div className="pj-actions">
-              <Button
-                disabled={
-                  busy ||
-                  (!login && !name.trim()) ||
-                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-                  password.length < 6
-                }
-                onClick={submitAuth}
-              >
-                {busy ? "รอสักครู่..." : login ? (isCloud ? "เข้าสู่ระบบ" : "เข้าสู่บัญชีสาธิต") : "ไปต่อ"}
-              </Button>
-              <Button variant="ghost" onClick={() => { setLogin(!login); setAuthError("") }}>
-                {login ? (isCloud ? "สมัครสมาชิกใหม่" : "สร้างบัญชีสาธิต") : "มีบัญชีอยู่แล้ว"}
-              </Button>
-            </div>
-            {authError && <p className="pj-caption">{authError}</p>}
-          </>
-        ) : step === 1 ? (
-          <>
-            <Title sub="เลือกได้หลายอย่าง และเปลี่ยนได้เสมอ">อะไรทำให้คุณรู้สึกดี?</Title>
-            <div className="pj-chips">
-              {interests.map((i) => (
-                <Button
-                  key={i}
-                  variant={selected.includes(i) ? "primary" : "soft"}
-                  aria-pressed={selected.includes(i)}
-                  onClick={() =>
-                    setSelected((s) =>
-                      s.includes(i) ? s.filter((v) => v !== i) : [...s, i],
-                    )
-                  }
-                >
-                  {i}
-                </Button>
-              ))}
-            </div>
-            <div className="pj-actions">
-              <Button variant="soft" onClick={() => setStep(0)}>
-                ย้อนกลับ
-              </Button>
-              <Button disabled={!selected.length} onClick={() => setStep(2)}>
-                เลือกอารมณ์วันนี้
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <Title>วันนี้อยากพักใจแบบไหน?</Title>
-            <Select
-              label="สิ่งที่ใจต้องการวันนี้"
-              value={mood}
-              onChange={setMood}
-              options={interests}
-            />
-            <div className="pj-actions">
-              <Button variant="soft" onClick={() => setStep(1)}>
-                ย้อนกลับ
-              </Button>
-              <Button
-                onClick={() => {
-                  update((s) => ({
-                    ...s,
-                    joined: true,
-                    name: name.trim() || s.name,
-                    interests: selected,
-                    mood,
-                  }))
-                  navigate("community")
-                  toast("ยินดีต้อนรับ พักในจังหวะของคุณได้เลย")
-                }}
-              >
-                เริ่มพักใจ
-              </Button>
-            </div>
-          </>
-        )}
-        <Button variant="ghost" onClick={() => navigate("home")}>
-          สำรวจก่อน ยังไม่ต้องสมัคร
-        </Button>
-      </Card>
     </div>
   )
 }
