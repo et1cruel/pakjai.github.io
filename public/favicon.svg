@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="pjg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2d6a4f"/>
+      <stop offset="1" stop-color="#1b4332"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#pjg)"/>
+  <!-- sun : hope / morning rest -->
+  <circle cx="45" cy="15" r="6" fill="#f4d166"/>
+  <circle cx="45" cy="15" r="8.5" fill="#f4d166" opacity="0.25"/>
+  <!-- heart-leaf : rest + nature -->
+  <path d="M32 48 C22.5 40.5 15.5 34 15.5 25.8 C15.5 20 19.8 16.2 24.6 16.2 C28.2 16.2 30.9 18.5 32 21 C33.1 18.5 35.8 16.2 39.4 16.2 C44.2 16.2 48.5 20 48.5 25.8 C48.5 34 41.5 40.5 32 48 Z" fill="#faf9f5"/>
+  <!-- leaf vein -->
+  <path d="M32 21 L32 44" stroke="#52b788" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M32 29 L26.5 25.5 M32 29 L37.5 25.5 M32 35.5 L25.5 31.5 M32 35.5 L38.5 31.5" stroke="#52b788" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
